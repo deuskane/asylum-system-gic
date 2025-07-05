@@ -33,7 +33,7 @@
 
             fields: [
                 {
-                    name: "value",
+                    name: "enable",
                     bits: "7:0",
 		    init: "x00",
                     desc: "0: interrupt is disable, 1: interrupt is enable"

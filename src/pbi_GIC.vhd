@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-04
--- Last update: 2025-07-04
+-- Last update: 2025-07-05
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -51,6 +51,7 @@ architecture rtl of pbi_GIC is
   signal   sw2hw                  : GIC_sw2hw_t;
   signal   hw2sw                  : GIC_hw2sw_t;
 
+  signal   its                    : std_logic_vector(8-1 downto 0);
   
 begin  -- architecture rtl
 
@@ -63,10 +64,11 @@ begin  -- architecture rtl
     sw2hw_o   => sw2hw           ,
     hw2sw_i   => hw2sw   
     );
-  
-  hw2sw_o.isr.we    <= '1';
-  hw2sw_o.isr.value <= (hw2sw_i.imr.value and its_i) or sw2hw_i.isr.value;
 
-  itm_o             <= reduce_or(sw2hw_i.isr.value);
+  its             <= std_logic_vector(resize(unsigned(its_i), 8));
+  hw2sw.isr.we    <= '1';
+  hw2sw.isr.value <= (sw2hw.imr.enable and its) or sw2hw.isr.value;
+
+  itm_o           <= reduce_or(sw2hw.isr.value);
 
 end architecture rtl;

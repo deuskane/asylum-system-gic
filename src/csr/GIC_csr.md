@@ -15,6 +15,6 @@ Interruption Status Register
 ## 0x1 imr
 Interruption Mask Register
 
-### [7:0] value
+### [7:0] enable
 0: interrupt is disable, 1: interrupt is enable
 

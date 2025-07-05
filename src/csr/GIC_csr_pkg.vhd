@@ -55,11 +55,11 @@ package GIC_csr_pkg is
     re : std_logic;
     we : std_logic;
   --==================================
-  -- Field       : value
+  -- Field       : enable
   -- Description : 0: interrupt is disable, 1: interrupt is enable
   -- Width       : 8
   --==================================
-    value : std_logic_vector(8-1 downto 0);
+    enable : std_logic_vector(8-1 downto 0);
   end record GIC_imr_sw2hw_t;
 
   ------------------------------------

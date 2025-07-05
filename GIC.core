@@ -41,7 +41,7 @@ filesets:
   hdl:
   #---------------------------------------
     files        :
-      - src/gic_master.vhd
+      - src/it_ctrl.vhd
       - src/pbi_GIC.vhd
     file_type    : vhdlSource
 #    logical_name : work

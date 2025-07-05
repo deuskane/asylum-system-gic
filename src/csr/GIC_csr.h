@@ -27,11 +27,11 @@
 //==================================
 #define GIC_IMR 0x1
 
-// Field       : imr.value
+// Field       : imr.enable
 // Description : 0: interrupt is disable, 1: interrupt is enable
 // Range       : [7:0]
-#define GIC_IMR_VALUE      0
-#define GIC_IMR_VALUE_MASK 255
+#define GIC_IMR_ENABLE      0
+#define GIC_IMR_ENABLE_MASK 255
 
 //----------------------------------
 // Structure {module}_t
