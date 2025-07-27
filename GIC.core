@@ -42,6 +42,7 @@ filesets:
   #---------------------------------------
     files        :
       - src/it_ctrl.vhd
+      - src/GIC_core.vhd
       - src/pbi_GIC.vhd
     file_type    : vhdlSource
 #    logical_name : work

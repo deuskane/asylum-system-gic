@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
--- Title      : pbi_GIC
+-- Title      : GIC_core
 -- Project    : PicoSOC
 -------------------------------------------------------------------------------
--- File       : pbi_GIC.vhd
+-- File       : GIC_core.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-04
--- Last update: 2025-07-27
+-- Last update: 2025-07-05
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -30,48 +30,30 @@ use     work.logic_pkg.all;
 use     work.pbi_pkg.all;
 use     work.GIC_csr_pkg.all;
 
-entity pbi_GIC is
+entity GIC_core is
   port   (
-    clk_i            : in    std_logic;
-    arst_b_i         : in    std_logic; -- asynchronous reset
-
-    -- Bus
-    pbi_ini_i        : in    pbi_ini_t;
-    pbi_tgt_o        : out   pbi_tgt_t;
-    
     -- Interrupt Interface
+    itm_o            : out std_logic;        -- Interruption  Output (Merged) 
     its_i            : in  std_logic_vector; -- Interruptions Input
-    itm_o            : out std_logic         -- Interruption  Output (Merged) 
+
+    -- IT Bank
+    isr_i            : in  std_logic_vector; -- Interruption Statut register (Current)
+    isr_o            : out std_logic_vector; -- Interruption Statut register (Next)
+    imr_i            : in  std_logic_vector  -- Interruption Mask   register (Current)
     );
 
-end entity pbi_GIC;
+end entity GIC_core;
 
-architecture rtl of pbi_GIC is
+architecture rtl of GIC_core is
 
-  signal   sw2hw                  : GIC_sw2hw_t;
-  signal   hw2sw                  : GIC_hw2sw_t;
-
+  signal   its : std_logic_vector(isr_i'range);
+  signal   isr : std_logic_vector(isr_i'range);
+  
 begin  -- architecture rtl
 
-  ins_csr : entity work.GIC_registers(rtl)
-  port map(
-    clk_i     => clk_i           ,
-    arst_b_i  => arst_b_i        ,
-    pbi_ini_i => pbi_ini_i       ,
-    pbi_tgt_o => pbi_tgt_o       ,
-    sw2hw_o   => sw2hw           ,
-    hw2sw_i   => hw2sw   
-    );
+  its   <= std_logic_vector(resize(unsigned(its_i), its'length));
+  isr   <= (imr_i and its) or isr_i;
+  isr_o <= isr;
+  itm_o <= reduce_or(isr_i);
 
-  ins_GIC_core : entity work.GIC_core(rtl)
-  port map(
-    itm_o     => itm_o           ,
-    its_i     => its_i           ,
-    isr_i     => sw2hw.isr.value ,
-    isr_o     => hw2sw.isr.value ,
-    imr_i     => sw2hw.imr.enable
-    );
-
-  hw2sw.isr.we <= '1';
-  
 end architecture rtl;
