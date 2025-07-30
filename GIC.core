@@ -13,7 +13,8 @@ CAPI=2:
 #-----------------------------------------------------------------------------
 # Revisions  :
 # Date        Version  Author   Description
-# 28/06/2025  1.0.0    mrosiere First Release
+# 2025/06/28  1.0.0    mrosiere First Release
+# 2025/07/30  1.1.0    mrosiere Add package
 #-----------------------------------------------------------------------------
 
 name        : asylum:system:GIC:1.0.0
@@ -41,6 +42,7 @@ filesets:
   hdl:
   #---------------------------------------
     files        :
+      - src/GIC_pkg.vhd
       - src/it_ctrl.vhd
       - src/GIC_core.vhd
       - src/pbi_GIC.vhd
