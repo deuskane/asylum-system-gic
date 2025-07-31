@@ -5,23 +5,25 @@
 -- File       : GIC_pkg.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
--- Created    : 2025-07-30
--- Last update: 2025-07-30
+-- Created    : 2025-07-31
+-- Last update: 2025-07-31
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
--- Copyright (c) 2017
+-- Copyright (c) 2025
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
--- 2025-07-30  1.0      mrosiere Created
+-- 2025-07-31  1.0      mrosiere Created
 -------------------------------------------------------------------------------
-
 library IEEE;
 use     IEEE.STD_LOGIC_1164.ALL;
 use     IEEE.NUMERIC_STD.ALL;
+
+library work;
+use     work.pbi_pkg.all;
 
 package GIC_pkg is
 
@@ -38,4 +40,42 @@ package GIC_pkg is
   type it_inis_t is array (natural range <>) of it_ini_t;
   type it_tgts_t is array (natural range <>) of it_tgt_t;
   
-end package GIC_pkg;
+-- [COMPONENT_INSERT][BEGIN]
+    component it_ctrl
+        port (
+    clk_i   : in  std_logic;
+    arstn_i : in  std_logic;
+    it_i    : in  std_logic;
+    it_val_o: out std_logic;
+    it_ack_i: in  std_logic
+    );
+    end component;
+    component GIC_core
+        port (
+    -- Interrupt Interface
+    itm_o            : out std_logic;        -- Interruption  Output (Merged) 
+    its_i            : in  std_logic_vector; -- Interruptions Input
+
+    -- IT Bank
+    isr_i            : in  std_logic_vector; -- Interruption Statut register (Current)
+    isr_o            : out std_logic_vector; -- Interruption Statut register (Next)
+    imr_i            : in  std_logic_vector  -- Interruption Mask   register (Current)
+    );
+    end component;
+    component pbi_GIC
+        port (
+    clk_i            : in    std_logic;
+    arst_b_i         : in    std_logic; -- asynchronous reset
+
+    -- Bus
+    pbi_ini_i        : in    pbi_ini_t;
+    pbi_tgt_o        : out   pbi_tgt_t;
+    
+    -- Interrupt Interface
+    its_i            : in  std_logic_vector; -- Interruptions Input
+    itm_o            : out std_logic         -- Interruption  Output (Merged) 
+    );
+    end component;
+-- [COMPONENT_INSERT][END]
+
+end GIC_pkg;

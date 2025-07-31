@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-04
--- Last update: 2025-07-05
+-- Last update: 2025-07-31
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -28,6 +28,7 @@ use     std.textio.all;
 library work;
 use     work.logic_pkg.all;
 use     work.pbi_pkg.all;
+use     work.GIC_pkg.all;
 use     work.GIC_csr_pkg.all;
 
 entity GIC_core is
