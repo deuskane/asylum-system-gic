@@ -17,7 +17,7 @@ CAPI=2:
 # 2025/07/30  1.1.0    mrosiere Add package
 #-----------------------------------------------------------------------------
 
-name        : asylum:system:GIC:1.0.0
+name        : asylum:system:GIC:1.1.0
 description : GIC Module
 
 #=========================================
@@ -29,9 +29,9 @@ generate:
   #---------------------------------------
     generator : regtool
     parameters:
-      file         : src/csr/GIC.hjson
+      file         : hdl/csr/GIC.hjson
       name         : GIC
-      copy         : src/csr
+      copy         : hdl/csr
       #logical_name : asylum
 
 #=========================================
@@ -42,10 +42,10 @@ filesets:
   hdl:
   #---------------------------------------
     files        :
-      - src/GIC_pkg.vhd
-      - src/it_ctrl.vhd
-      - src/GIC_core.vhd
-      - src/pbi_GIC.vhd
+      - hdl/GIC_pkg.vhd
+      - hdl/it_ctrl.vhd
+      - hdl/GIC_core.vhd
+      - hdl/pbi_GIC.vhd
     file_type    : vhdlSource
 #    logical_name : work
     depend       :
