@@ -33,8 +33,7 @@ package GIC_pkg is
   end record it_ini_t;
 
   type it_tgt_t is record
-    valid  : std_logic;
-    name   : string;
+    ready  : std_logic;
   end record it_tgt_t;
   
   type it_inis_t is array (natural range <>) of it_ini_t;
