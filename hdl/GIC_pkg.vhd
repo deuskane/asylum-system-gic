@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-31
--- Last update: 2025-07-31
+-- Last update: 2025-09-01
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -40,17 +40,18 @@ package GIC_pkg is
   type it_tgts_t is array (natural range <>) of it_tgt_t;
   
 -- [COMPONENT_INSERT][BEGIN]
-    component it_ctrl
-        port (
+component it_ctrl is
+  port (
     clk_i   : in  std_logic;
     arstn_i : in  std_logic;
     it_i    : in  std_logic;
     it_val_o: out std_logic;
     it_ack_i: in  std_logic
     );
-    end component;
-    component GIC_core
-        port (
+end component it_ctrl;
+
+component GIC_core is
+  port   (
     -- Interrupt Interface
     itm_o            : out std_logic;        -- Interruption  Output (Merged) 
     its_i            : in  std_logic_vector; -- Interruptions Input
@@ -60,9 +61,11 @@ package GIC_pkg is
     isr_o            : out std_logic_vector; -- Interruption Statut register (Next)
     imr_i            : in  std_logic_vector  -- Interruption Mask   register (Current)
     );
-    end component;
-    component pbi_GIC
-        port (
+
+end component GIC_core;
+
+component pbi_GIC is
+  port   (
     clk_i            : in    std_logic;
     arst_b_i         : in    std_logic; -- asynchronous reset
 
@@ -74,7 +77,9 @@ package GIC_pkg is
     its_i            : in  std_logic_vector; -- Interruptions Input
     itm_o            : out std_logic         -- Interruption  Output (Merged) 
     );
-    end component;
+
+end component pbi_GIC;
+
 -- [COMPONENT_INSERT][END]
 
 end GIC_pkg;
