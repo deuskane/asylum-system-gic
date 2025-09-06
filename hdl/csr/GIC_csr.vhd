@@ -8,6 +8,8 @@ use     IEEE.NUMERIC_STD.ALL;
 library work;
 use     work.GIC_csr_pkg.ALL;
 library work;
+use     work.csr_pkg.ALL;
+library work;
 use     work.pbi_pkg.all;
 
 --==================================
@@ -135,7 +137,7 @@ begin  -- architecture rtl
     isr_wdata_hw(7 downto 0) <= hw2sw_i.isr.value; -- value
     sw2hw_o.isr.value <= isr_rdata_hw(7 downto 0); -- value
 
-    ins_isr : entity work.csr_reg(rtl)
+    ins_isr : csr_reg
       generic map
         (WIDTH         => 8
         ,INIT          => INIT_isr
@@ -208,7 +210,7 @@ begin  -- architecture rtl
     imr_wdata_sw(7 downto 0) <= imr_wdata(7 downto 0); -- enable
     sw2hw_o.imr.enable <= imr_rdata_hw(7 downto 0); -- enable
 
-    ins_imr : entity work.csr_reg(rtl)
+    ins_imr : csr_reg
       generic map
         (WIDTH         => 8
         ,INIT          => INIT_imr

@@ -4,6 +4,8 @@ library IEEE;
 use     IEEE.STD_LOGIC_1164.ALL;
 use     IEEE.NUMERIC_STD.ALL;
 
+library work;
+use     work.pbi_pkg.all;
 --==================================
 -- Module      : GIC
 -- Description : CSR for GIC
@@ -76,5 +78,23 @@ package GIC_csr_pkg is
 
   constant GIC_ADDR_WIDTH : natural := 1;
   constant GIC_DATA_WIDTH : natural := 8;
+
+  ------------------------------------
+  -- Component
+  ------------------------------------
+component GIC_registers is
+  port (
+    -- Clock and Reset
+    clk_i      : in  std_logic;
+    arst_b_i   : in  std_logic;
+    -- Bus
+    pbi_ini_i  : in  pbi_ini_t;
+    pbi_tgt_o  : out pbi_tgt_t;
+    -- CSR
+    sw2hw_o    : out GIC_sw2hw_t;
+    hw2sw_i    : in  GIC_hw2sw_t
+  );
+end component GIC_registers;
+
 
 end package GIC_csr_pkg;
