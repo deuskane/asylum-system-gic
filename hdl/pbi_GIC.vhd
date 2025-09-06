@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-04
--- Last update: 2025-07-31
+-- Last update: 2025-09-06
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ architecture rtl of pbi_GIC is
 
 begin  -- architecture rtl
 
-  ins_csr : entity work.GIC_registers(rtl)
+  ins_csr : GIC_registers
   port map(
     clk_i     => clk_i           ,
     arst_b_i  => arst_b_i        ,
