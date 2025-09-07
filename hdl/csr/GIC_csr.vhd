@@ -5,12 +5,12 @@ library IEEE;
 use     IEEE.STD_LOGIC_1164.ALL;
 use     IEEE.NUMERIC_STD.ALL;
 
-library work;
-use     work.GIC_csr_pkg.ALL;
-library work;
-use     work.csr_pkg.ALL;
-library work;
-use     work.pbi_pkg.all;
+library asylum;
+use     asylum.GIC_csr_pkg.ALL;
+library asylum;
+use     asylum.csr_pkg.ALL;
+library asylum;
+use     asylum.pbi_pkg.all;
 
 --==================================
 -- Module      : GIC

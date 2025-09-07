@@ -25,11 +25,11 @@ use     IEEE.numeric_std.ALL;
 use     ieee.std_logic_textio.all;
 use     std.textio.all;
 
-library work;
-use     work.logic_pkg.all;
-use     work.pbi_pkg.all;
-use     work.GIC_pkg.all;
-use     work.GIC_csr_pkg.all;
+library asylum;
+use     asylum.logic_pkg.all;
+use     asylum.pbi_pkg.all;
+use     asylum.GIC_pkg.all;
+use     asylum.GIC_csr_pkg.all;
 
 entity GIC_core is
   port   (
