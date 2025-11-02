@@ -47,9 +47,14 @@ architecture rtl of GIC_registers is
 
   signal   sig_busy  : std_logic;
 
-  constant INIT_isr : std_logic_vector(8-1 downto 0) :=
-             "00000000" -- value
-           ;
+  function INIT_isr
+    return std_logic_vector is
+    variable tmp : std_logic_vector(8-1 downto 0);
+  begin  -- function INIT_isr
+    tmp(7 downto 0) := "00000000"; -- value
+    return tmp;
+  end function INIT_isr;
+
   signal   isr_wcs       : std_logic;
   signal   isr_we        : std_logic;
   signal   isr_wdata     : std_logic_vector(8-1 downto 0);
@@ -64,9 +69,14 @@ architecture rtl of GIC_registers is
   signal   isr_rdata_hw  : std_logic_vector(8-1 downto 0);
   signal   isr_rbusy     : std_logic;
 
-  constant INIT_imr : std_logic_vector(8-1 downto 0) :=
-             "00000000" -- enable
-           ;
+  function INIT_imr
+    return std_logic_vector is
+    variable tmp : std_logic_vector(8-1 downto 0);
+  begin  -- function INIT_imr
+    tmp(7 downto 0) := "00000000"; -- enable
+    return tmp;
+  end function INIT_imr;
+
   signal   imr_wcs       : std_logic;
   signal   imr_we        : std_logic;
   signal   imr_wdata     : std_logic_vector(8-1 downto 0);
