@@ -15,9 +15,10 @@ CAPI=2:
 # Date        Version  Author   Description
 # 2025/06/28  1.0.0    mrosiere First Release
 # 2025/07/30  1.1.0    mrosiere Add package
+# 2025-11-22  1.1.1    mrosiere Use sbi instead pbi
 #-----------------------------------------------------------------------------
 
-name        : asylum:system:GIC:1.1.0
+name        : asylum:system:GIC:1.1.1
 description : GIC Module
 
 #=========================================
@@ -45,13 +46,12 @@ filesets:
       - hdl/GIC_pkg.vhd
       - hdl/it_ctrl.vhd
       - hdl/GIC_core.vhd
-      - hdl/pbi_GIC.vhd
+      - hdl/sbi_GIC.vhd
     file_type    : vhdlSource
     logical_name : asylum
     depend       :
       - asylum:utils:generators
       - asylum:utils:pkg
-      - asylum:component:pbi_wrapper_target
 
 #=========================================
 targets:

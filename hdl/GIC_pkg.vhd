@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-31
--- Last update: 2025-09-01
+-- Last update: 2025-11-22
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ use     IEEE.STD_LOGIC_1164.ALL;
 use     IEEE.NUMERIC_STD.ALL;
 
 library asylum;
-use     asylum.pbi_pkg.all;
+use     asylum.sbi_pkg.all;
 
 package GIC_pkg is
 
@@ -64,21 +64,21 @@ component GIC_core is
 
 end component GIC_core;
 
-component pbi_GIC is
+component sbi_GIC is
   port   (
     clk_i            : in    std_logic;
     arst_b_i         : in    std_logic; -- asynchronous reset
 
     -- Bus
-    pbi_ini_i        : in    pbi_ini_t;
-    pbi_tgt_o        : out   pbi_tgt_t;
+    sbi_ini_i        : in    sbi_ini_t;
+    sbi_tgt_o        : out   sbi_tgt_t;
     
     -- Interrupt Interface
     its_i            : in  std_logic_vector; -- Interruptions Input
     itm_o            : out std_logic         -- Interruption  Output (Merged) 
     );
 
-end component pbi_GIC;
+end component sbi_GIC;
 
 -- [COMPONENT_INSERT][END]
 

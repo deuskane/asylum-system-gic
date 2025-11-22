@@ -2,7 +2,7 @@
     name      : "GIC",
     width     : 8,
     desc      : "CSR for GIC"
-    interface : "pbi"
+    interface : "sbi"
 
     registers : [
 

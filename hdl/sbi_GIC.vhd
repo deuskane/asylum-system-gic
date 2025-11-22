@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
--- Title      : pbi_GIC
+-- Title      : sbi_GIC
 -- Project    : PicoSOC
 -------------------------------------------------------------------------------
--- File       : pbi_GIC.vhd
+-- File       : sbi_GIC.vhd
 -- Author     : Mathieu Rosiere
 -- Company    : 
 -- Created    : 2025-07-04
--- Last update: 2025-09-06
+-- Last update: 2025-11-22
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -27,27 +27,27 @@ use     std.textio.all;
 
 library asylum;
 use     asylum.logic_pkg.all;
-use     asylum.pbi_pkg.all;
+use     asylum.sbi_pkg.all;
 use     asylum.GIC_pkg.all;
 use     asylum.GIC_csr_pkg.all;
 
-entity pbi_GIC is
+entity sbi_GIC is
   port   (
     clk_i            : in    std_logic;
     arst_b_i         : in    std_logic; -- asynchronous reset
 
     -- Bus
-    pbi_ini_i        : in    pbi_ini_t;
-    pbi_tgt_o        : out   pbi_tgt_t;
+    sbi_ini_i        : in    sbi_ini_t;
+    sbi_tgt_o        : out   sbi_tgt_t;
     
     -- Interrupt Interface
     its_i            : in  std_logic_vector; -- Interruptions Input
     itm_o            : out std_logic         -- Interruption  Output (Merged) 
     );
 
-end entity pbi_GIC;
+end entity sbi_GIC;
 
-architecture rtl of pbi_GIC is
+architecture rtl of sbi_GIC is
 
   signal   sw2hw                  : GIC_sw2hw_t;
   signal   hw2sw                  : GIC_hw2sw_t;
@@ -58,8 +58,8 @@ begin  -- architecture rtl
   port map(
     clk_i     => clk_i           ,
     arst_b_i  => arst_b_i        ,
-    pbi_ini_i => pbi_ini_i       ,
-    pbi_tgt_o => pbi_tgt_o       ,
+    sbi_ini_i => sbi_ini_i       ,
+    sbi_tgt_o => sbi_tgt_o       ,
     sw2hw_o   => sw2hw           ,
     hw2sw_i   => hw2sw   
     );
