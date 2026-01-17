@@ -65,13 +65,16 @@ component GIC_core is
 end component GIC_core;
 
 component sbi_GIC is
+  generic (
+    ITS_SYNC_ENABLE  : in  std_logic_vector
+    );
   port   (
-    clk_i            : in    std_logic;
-    arst_b_i         : in    std_logic; -- asynchronous reset
+    clk_i            : in  std_logic;
+    arst_b_i         : in  std_logic; -- asynchronous reset
 
     -- Bus
-    sbi_ini_i        : in    sbi_ini_t;
-    sbi_tgt_o        : out   sbi_tgt_t;
+    sbi_ini_i        : in  sbi_ini_t;
+    sbi_tgt_o        : out sbi_tgt_t;
     
     -- Interrupt Interface
     its_i            : in  std_logic_vector; -- Interruptions Input
