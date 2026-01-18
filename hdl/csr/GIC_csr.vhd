@@ -268,4 +268,5 @@ begin  -- architecture rtl
     isr_rdata when isr_rcs = '1' else
     imr_rdata when imr_rcs = '1' else
     (others => '0'); -- Bad Address, return 0
+  sbi_tgt_o.info.name <= to_sbi_name("GIC");
 end architecture rtl;
