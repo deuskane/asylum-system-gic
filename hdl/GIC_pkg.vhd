@@ -40,16 +40,6 @@ package GIC_pkg is
   type it_tgts_t is array (natural range <>) of it_tgt_t;
   
 -- [COMPONENT_INSERT][BEGIN]
-component it_ctrl is
-  port (
-    clk_i   : in  std_logic;
-    arstn_i : in  std_logic;
-    it_i    : in  std_logic;
-    it_val_o: out std_logic;
-    it_ack_i: in  std_logic
-    );
-end component it_ctrl;
-
 component GIC_core is
   port   (
     -- Interrupt Interface
@@ -63,6 +53,16 @@ component GIC_core is
     );
 
 end component GIC_core;
+
+component it_ctrl is
+  port (
+    clk_i   : in  std_logic;
+    arstn_i : in  std_logic;
+    it_i    : in  std_logic;
+    it_val_o: out std_logic;
+    it_ack_i: in  std_logic
+    );
+end component it_ctrl;
 
 component sbi_GIC is
   generic (
