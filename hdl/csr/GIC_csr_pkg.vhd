@@ -76,6 +76,7 @@ package GIC_csr_pkg is
     isr : GIC_isr_hw2sw_t;
   end record GIC_hw2sw_t;
 
+
   constant GIC_ADDR_WIDTH : natural := 1;
   constant GIC_DATA_WIDTH : natural := 8;
 
@@ -85,14 +86,14 @@ package GIC_csr_pkg is
 component GIC_registers is
   port (
     -- Clock and Reset
-    clk_i      : in  std_logic;
-    arst_b_i   : in  std_logic;
+    clk_i      : in  std_logic
+   ;arst_b_i   : in  std_logic
     -- Bus
-    sbi_ini_i  : in  sbi_ini_t;
-    sbi_tgt_o  : out sbi_tgt_t;
+   ;sbi_ini_i  : in  sbi_ini_t
+   ;sbi_tgt_o  : out sbi_tgt_t
     -- CSR
-    sw2hw_o    : out GIC_sw2hw_t;
-    hw2sw_i    : in  GIC_hw2sw_t
+   ;sw2hw_o    : out GIC_sw2hw_t
+   ;hw2sw_i    : in  GIC_hw2sw_t
   );
 end component GIC_registers;
 
