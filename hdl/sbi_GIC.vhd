@@ -34,7 +34,8 @@ use     asylum.techmap_pkg.all;
 
 entity sbi_GIC is
   generic (
-    ITS_SYNC_ENABLE  : in  std_logic_vector
+    NAME             : string  := "";
+    ITS_SYNC_ENABLE  : std_logic_vector
     );
   port   (
     clk_i            : in  std_logic;
@@ -84,6 +85,9 @@ begin  -- architecture rtl
   
   
   ins_csr : GIC_registers
+  generic map(
+    MODULE_NAME           => NAME
+    )
   port map(
     clk_i     => clk_i           ,
     arst_b_i  => arst_b_i        ,

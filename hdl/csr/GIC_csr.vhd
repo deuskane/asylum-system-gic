@@ -18,6 +18,9 @@ use     asylum.sbi_pkg.all;
 -- Width       : 8
 --==================================
 entity GIC_registers is
+  generic (
+    MODULE_NAME :  string := "" -- Name of the module
+  );
   port (
     -- Clock and Reset
     clk_i      : in  std_logic
@@ -268,5 +271,11 @@ begin  -- architecture rtl
     isr_rdata when isr_rcs = '1' else
     imr_rdata when imr_rcs = '1' else
     (others => '0'); -- Bad Address, return 0
-  sbi_tgt_o.info.name <= to_sbi_name("GIC");
+
+  gen_tgt_info_name : if MODULE_NAME = ""
+  generate
+    sbi_tgt_o.info.name <= to_sbi_name("GIC");
+  else generate
+    sbi_tgt_o.info.name <= to_sbi_name(MODULE_NAME);
+  end generate;
 end architecture rtl;

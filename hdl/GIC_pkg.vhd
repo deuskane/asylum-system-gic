@@ -66,7 +66,8 @@ end component it_ctrl;
 
 component sbi_GIC is
   generic (
-    ITS_SYNC_ENABLE  : in  std_logic_vector
+    NAME             : string  := "";
+    ITS_SYNC_ENABLE  : std_logic_vector
     );
   port   (
     clk_i            : in  std_logic;

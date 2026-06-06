@@ -13,13 +13,14 @@ CAPI=2:
 #-----------------------------------------------------------------------------
 # Revisions  :
 # Date        Version  Author   Description
-# 2025/06/28  1.0.0    mrosiere First Release
-# 2025/07/30  1.1.0    mrosiere Add package
-# 2025/11/22  1.1.1    mrosiere Use sbi instead pbi
-# 2026/01/17  1.2.0    mrosiere Add parameter to enable syncdff
+# 2025-06-28  1.0.0    mrosiere First Release
+# 2025-07-30  1.1.0    mrosiere Add package
+# 2025-11-22  1.1.1    mrosiere Use sbi instead pbi
+# 2026-01-17  1.2.0    mrosiere Add parameter to enable syncdff
+# 2026-06-06  1.2.1    mrosiere Add Name
 #-----------------------------------------------------------------------------
 
-name        : asylum:system:GIC:1.2.0
+name        : asylum:system:GIC:1.2.1
 description : GIC Module
 
 #=========================================
