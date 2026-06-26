@@ -34,7 +34,7 @@
 #define GIC_IMR_ENABLE_MASK 255
 
 //----------------------------------
-// Structure {module}_t
+// Structure GIC_t
 //----------------------------------
 typedef struct {
   uint8_t isr; // 0x0
