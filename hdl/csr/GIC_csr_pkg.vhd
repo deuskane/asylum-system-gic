@@ -14,6 +14,13 @@ use     asylum.sbi_pkg.all;
 
 package GIC_csr_pkg is
 
+  ------------------------------------
+  -- Global Constants
+  ------------------------------------
+
+  constant GIC_ADDR_WIDTH : natural := 1;
+  constant GIC_DATA_WIDTH : natural := 8;
+
   --==================================
   -- Register    : isr
   -- Description : Interruption Status Register
@@ -23,6 +30,8 @@ package GIC_csr_pkg is
   -- Hw Access   : rw
   -- Hw Type     : reg
   --==================================
+  constant GIC_ISR : unsigned(GIC_ADDR_WIDTH-1 downto 0) := to_unsigned(0, GIC_ADDR_WIDTH);
+
   type GIC_isr_sw2hw_t is record
     re : std_logic;
     we : std_logic;
@@ -53,6 +62,8 @@ package GIC_csr_pkg is
   -- Hw Access   : ro
   -- Hw Type     : reg
   --==================================
+  constant GIC_IMR : unsigned(GIC_ADDR_WIDTH-1 downto 0) := to_unsigned(1, GIC_ADDR_WIDTH);
+
   type GIC_imr_sw2hw_t is record
     re : std_logic;
     we : std_logic;
@@ -75,10 +86,6 @@ package GIC_csr_pkg is
   type GIC_hw2sw_t is record
     isr : GIC_isr_hw2sw_t;
   end record GIC_hw2sw_t;
-
-
-  constant GIC_ADDR_WIDTH : natural := 1;
-  constant GIC_DATA_WIDTH : natural := 8;
 
   ------------------------------------
   -- Component
