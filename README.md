@@ -1,3 +1,5 @@
+[![CI](https://github.com/deuskane/asylum-system-gic/actions/workflows/ci.yml/badge.svg)](https://github.com/deuskane/asylum-system-gic/actions/workflows/ci.yml)
+
 **Table Of Contents**
 - **Introduction**: Short description of this repository and purpose.
 - **HDL Modules**: Per-module description, generics and ports.
