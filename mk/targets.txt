@@ -1,2 +1,6 @@
-default : Default Target
+default          : Default Target
+sim_gic_1_sync   : Simulation of sbi_GIC with VIP - 1 line with synchronizer
+sim_gic_3_mixed  : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
+sim_gic_8_nosync : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+sim_gic_8_sync   : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
 

@@ -1,109 +1,291 @@
+<!--
+  README GENERATION INSTRUCTIONS (for the next regeneration run)
+  ----------------------------------------------------------------
+  This README follows the common Asylum IP model. Regenerate it from the
+  sources, never from the previous README text alone.
+
+  Sources of truth (in priority order):
+    1. hdl/*.vhd            : entities, generics, ports, packages
+    2. hdl/csr/*.hjson      : register map (regtool); *_csr.md/.h are generated
+    3. <IP>.core            : VLNV (name), filesets, targets, depends, revisions
+    4. mk/targets.txt       : target list shown by `make help`; mk/defs.mk
+    5. sim/, syn/, esw/, boards/ : testbenches, constraints, software
+  Section order (keep it, same headings in every IP):
+    CI badge / Title + one-line description + VLNV / Table of Contents /
+    Introduction (Key Features) / Block Diagram / Top-Level (Parameters,
+    Ports, Instantiation Example) / HDL Modules / Register Map /
+    Verification / Synthesis / Design Notes (optional) /
+    Directory Structure / Dependencies
+  Rules:
+    - Language: English. Tables: Parameters = Name|Type|Default|Description,
+      Ports = Name|Direction|Type|Description (grouped by interface).
+    - Register Map: link to the generated hdl/csr/<X>_csr.md (plus the
+      .hjson source and _csr.h header); never copy register tables here.
+    - Top-Level = sbi_* wrapper if present, else the entity used by the
+      `default` target, else the main entity (libraries: list packages).
+    - Write "This IP has no software-visible registers." / "No dedicated
+      synthesis target ..." instead of removing a section.
+    - Keep still-accurate hand-written content (ISA tables, results,
+      images) in "Design Notes"; drop anything not backed by the sources.
+    - Block diagram: doc/<NAME>.drawio (NAME = 4th field of the VLNV),
+      top entity box with generics on top, inputs left, outputs right,
+      bus interfaces as bold arrows, internal blocks colour-coded
+      (CSR yellow, FIFO/memory green, core logic blue, external grey).
+      Update it whenever ports/generics/sub-blocks change.
+    - Do not edit generated files (hdl/csr/*_csr.*) or the CI badge URL.
+-->
 [![CI](https://github.com/deuskane/asylum-system-gic/actions/workflows/ci.yml/badge.svg)](https://github.com/deuskane/asylum-system-gic/actions/workflows/ci.yml)
 
-**Table Of Contents**
-- **Introduction**: Short description of this repository and purpose.
-- **HDL Modules**: Per-module description, generics and ports.
-- **Register Map (CSR)**: CSR register list with links to registers and bitfields.
-- **Verification**: Notes about simulation and the Fusesoc core file.
+# asylum-system-gic
 
-**Introduction**
-- **Repository**: `asylum-system-gic` provides a small General Interrupt Controller (GIC) implementation in VHDL.
-- **Location of sources**: HDL sources are in `hdl/`. CSR definitions and generated files are in `hdl/csr/`.
-- **Purpose**: Provide a lightweight GIC with a simple software-visible register map (ISRs, IMRs) and an SBI-compatible interface.
+**Small interrupt controller: up to 8 interrupt lines latched in a status register, per-line mask, merged interrupt output and CSR access over the SBI bus.**
 
-**HDL Modules**
-- **Module folder**: `hdl/`
+VLNV: `asylum:system:GIC:1.2.2`
 
-Below are the modules present in `hdl/` with their generics (if any) and port descriptions.
+## Table of Contents
 
-**GIC_core** (`hdl/GIC_core.vhd`)
-- **Description**: Core combinational logic that computes interrupt status and merged interrupt output from inputs, mask and status registers.
+1. [Introduction](#introduction)
+2. [Block Diagram](#block-diagram)
+3. [Top-Level](#top-level)
+4. [HDL Modules](#hdl-modules)
+5. [Register Map](#register-map)
+6. [Verification](#verification)
+7. [Synthesis](#synthesis)
+8. [Design Notes](#design-notes)
+9. [Directory Structure](#directory-structure)
+10. [Dependencies](#dependencies)
 
-Generics
+## Introduction
+
+This IP is the General Interrupt Controller (GIC) of the Asylum project. `sbi_GIC` collects a vector of interrupt lines, latches the unmasked ones in an interrupt status register (ISR) and drives a single merged interrupt output towards the processor. Software reads the ISR, clears the served bits by writing 1 and enables lines in the interrupt mask register (IMR). Each input line can optionally be resynchronized on `clk_i`.
+
+The combinational part, `GIC_core`, is also reused by other Asylum IPs (UART, GPIO with interrupts, timer) to build their own ISR / IMR registers.
+
+### Key Features
+
+- Up to 8 interrupt lines (`its_i`, unconstrained vector, mapped onto the 8-bit ISR)
+- Sticky status register (rw1c) updated every cycle with `imr and its`
+- Per-line mask register, reset to 0 (all lines disabled)
+- Merged interrupt output `itm_o` = OR of the ISR bits
+- Optional 2-flip-flop synchronizer per line (`ITS_SYNC_ENABLE`)
+- Reusable `GIC_core` and stand-alone `it_ctrl` edge latch with acknowledge
+
+## Block Diagram
+
+Diagram: [doc/GIC.drawio](doc/GIC.drawio) (open with diagrams.net or the VS Code Draw.io extension).
+
+- Each line of `its_i` goes through a `sync2dffrn` (techmap) when `ITS_SYNC_ENABLE(i) = '1'`, otherwise it is used directly.
+- `GIC_core` computes the next ISR value `(imr and its) or isr`, written into the `isr` register of `GIC_registers` every cycle.
+- The SBI bus accesses `GIC_registers` (generated by regtool from [hdl/csr/GIC.hjson](hdl/csr/GIC.hjson)).
+- `itm_o` is the OR of the current `isr` bits.
+
+## Top-Level
+
+Top-level entity: **`sbi_GIC`** ([hdl/sbi_GIC.vhd](hdl/sbi_GIC.vhd)), library `asylum`, component declared in `asylum.GIC_pkg`.
+
+### Parameters
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| *(none)* | | | This entity defines no generics |
+| `NAME` | string | `""` | Instance name, forwarded to the CSR block (`MODULE_NAME`, visible in `sbi_tgt_o.info`) |
+| `ITS_SYNC_ENABLE` | std_logic_vector | *(none)* | One bit per interrupt line, same index range as `its_i` (length checked by an assertion): `'1'` inserts a `sync2dffrn` synchronizer on `its_i(i)` (2 extra cycles of latency) |
 
-Ports
+### Ports
+
+#### Clock & Reset
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `itm_o` | out | `std_logic` | Merged interrupt output (single-bit interrupt) |
-| `its_i` | in  | `std_logic_vector` | Interrupt inputs vector (raw interrupt lines) |
-| `isr_i` | in  | `std_logic_vector` | Current Interrupt Status Register (from CSR) |
-| `isr_o` | out | `std_logic_vector` | Next Interrupt Status Register (to CSR logic) |
-| `imr_i` | in  | `std_logic_vector` | Interrupt Mask Register (from CSR) |
+| `clk_i` | in | std_logic | System clock |
+| `arst_b_i` | in | std_logic | Asynchronous reset, active low |
 
-Notes: The component reduces the active ISR bits into `itm_o` using a logical OR and computes the next ISR value combining mask and inputs.
-
-**it_ctrl** (`hdl/it_ctrl.vhd`)
-- **Description**: Simple edge-detection and handshake for a single interrupt line. Produces a sticky `it_val_o` until acknowledged.
-
-Generics
-
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| *(none)* | | | This entity defines no generics |
-
-Ports
+#### Bus (SBI)
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `clk_i` | in  | `std_logic` | Clock input |
-| `arstn_i` | in  | `std_logic` | Asynchronous reset (active low) |
-| `it_i` | in  | `std_logic` | Raw interrupt input |
-| `it_val_o` | out | `std_logic` | Valid/sticky interrupt output (set on rising edge until ack) |
-| `it_ack_i` | in  | `std_logic` | Acknowledge input to clear `it_val_o` |
+| `sbi_ini_i` | in | sbi_ini_t | SBI request from the initiator (`cs`, `re`, `we`, `addr`, `wdata`) |
+| `sbi_tgt_o` | out | sbi_tgt_t | SBI response to the initiator (`ready`, `rdata`, `info`) |
 
-**sbi_GIC** (`hdl/sbi_GIC.vhd`)
-- **Description**: Top-level integration wrapper that instantiates the CSR register block (`GIC_registers`) and `GIC_core`. Exposes an SBI-compatible bus interface and the interrupt interface.
-
-Generics
-
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| *(none)* | | | This entity defines no generics |
-
-Ports
+#### Interrupts
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
-| `clk_i` | in | `std_logic` | Clock input |
-| `arst_b_i` | in | `std_logic` | Asynchronous reset (active low) |
-| `sbi_ini_i` | in | `sbi_ini_t` | Bus initiator interface (SBI) |
-| `sbi_tgt_o` | out | `sbi_tgt_t` | Bus target interface (SBI) |
-| `its_i` | in | `std_logic_vector` | Interrupt inputs vector (forwarded to GIC_core) |
-| `itm_o` | out | `std_logic` | Merged interrupt output (from GIC_core) |
+| `its_i` | in | std_logic_vector (unconstrained) | Interrupt lines, active high, at most 8 (assertion); line i = ISR bit i |
+| `itm_o` | out | std_logic | Merged interrupt: OR of the `isr` bits |
 
-**GIC_pkg** (`hdl/GIC_pkg.vhd`)
-- **Description**: Package declaring component interfaces and record/array types used by the GIC family (`it_ini_t`, `it_tgt_t`, arrays, and component declarations for `it_ctrl`, `GIC_core`, `sbi_GIC`).
+### Instantiation Example
 
-Generics
+```vhdl
+library asylum;
+use     asylum.sbi_pkg.all;
+use     asylum.GIC_pkg.all;
+
+  -- its     : std_logic_vector(3 downto 0)  -- interrupt sources
+  -- GIC_ITS_SYNC : constant std_logic_vector(3 downto 0) := "1100"; -- resynchronize lines 3 and 2
+
+  ins_gic : entity asylum.sbi_GIC
+    generic map
+    ( NAME            => "GIC0"
+     ,ITS_SYNC_ENABLE => GIC_ITS_SYNC
+    )
+    port map
+    ( clk_i     => clk
+     ,arst_b_i  => arst_b
+     ,sbi_ini_i => sbi_inis(GIC0_ID)   -- sbi_ini_t(addr(0 downto 0), wdata(7 downto 0))
+     ,sbi_tgt_o => sbi_tgts(GIC0_ID)   -- sbi_tgt_t(rdata(7 downto 0))
+     ,its_i     => its
+     ,itm_o     => cpu_irq
+    );
+```
+
+The CSR bank uses 1 address bit (`GIC_ADDR_WIDTH = 1`) and 8-bit data (`GIC_DATA_WIDTH = 8`), see `asylum.GIC_csr_pkg`. Pass `ITS_SYNC_ENABLE` as a constant declared with the same range as `its_i`: a bare string literal gets an ascending `0 to N-1` range.
+
+## HDL Modules
+
+| File | Unit | Kind | Role |
+|------|------|------|------|
+| [hdl/GIC_pkg.vhd](hdl/GIC_pkg.vhd) | `GIC_pkg` | package | Records `it_ini_t` (`valid`, `name`) / `it_tgt_t` (`ready`) and their arrays, component declarations of `GIC_core`, `it_ctrl`, `sbi_GIC` |
+| [hdl/it_ctrl.vhd](hdl/it_ctrl.vhd) | `it_ctrl` | entity | Single-line rising-edge latch with acknowledge (not instantiated in this IP) |
+| [hdl/GIC_core.vhd](hdl/GIC_core.vhd) | `GIC_core` | entity | Combinational ISR update and interrupt merge (also used by UART, GPIO, timer) |
+| [hdl/sbi_GIC.vhd](hdl/sbi_GIC.vhd) | `sbi_GIC` | entity | Top-level: optional synchronizers + `GIC_registers` + `GIC_core` |
+| hdl/csr/GIC_csr.vhd | `GIC_registers` | entity | Generated CSR bank (regtool) |
+| hdl/csr/GIC_csr_pkg.vhd | `GIC_csr_pkg` | package | Generated types (`GIC_sw2hw_t`, `GIC_hw2sw_t`), address constants and `GIC_registers` component |
+
+### GIC_core
+
+#### Parameters
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| *(none)* | | | Package file, not an entity |
+| *(none)* | | | |
 
-Ports
+#### Ports
 
-| *(not applicable)* | | | `GIC_pkg` exports types and component declarations for use by other modules |
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `itm_o` | out | std_logic | Merged interrupt: OR of `isr_i` |
+| `its_i` | in | std_logic_vector (unconstrained) | Interrupt sources, resized to the width of `isr_i` |
+| `isr_i` | in | std_logic_vector (unconstrained) | Current ISR value |
+| `isr_o` | out | std_logic_vector (unconstrained) | Next ISR value: `(imr_i and its) or isr_i` |
+| `imr_i` | in | std_logic_vector (unconstrained) | Current IMR value |
 
-**Register Map (CSR)**
-- **CSR folder**: `hdl/csr/`
-- **Primary files**: `hdl/csr/GIC.hjson`, `hdl/csr/GIC_csr.md`, `hdl/csr/GIC_csr.vhd`, `hdl/csr/GIC_csr.h`.
-- **Generated by**: The project `GIC.core` uses the `regtool` generator (see `GIC.core`) to produce CSR HDL and header artifacts from `hdl/csr/GIC.hjson`.
+### it_ctrl
 
-Registers
+#### Parameters
 
-| Address | Register | Access | Link |
-|---------|----------|--------|------|
-| `0x0` | `isr` | `swaccess: rw1c`, `hwaccess: rw` | [isr - CSR doc](hdl/csr/GIC_csr.md#0x0-isr) |
-| `0x1` | `imr` | `swaccess: rw`, `hwaccess: ro` | [imr - CSR doc](hdl/csr/GIC_csr.md#0x1-imr) |
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| *(none)* | | | |
 
-Bitfields (click to open CSR markdown)
+#### Ports
 
-| Register | Field | Bits | Description | Link |
-|----------|-------|------|-------------|------|
-| `isr` | `value` | [7:0] | 0: inactive, 1: active | [isr.value](hdl/csr/GIC_csr.md#7-0-value) |
-| `imr` | `enable` | [7:0] | 0: disabled, 1: enabled | [imr.enable](hdl/csr/GIC_csr.md#7-0-enable) |
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `clk_i` | in | std_logic | System clock |
+| `arstn_i` | in | std_logic | Asynchronous reset, active low |
+| `it_i` | in | std_logic | Interrupt line |
+| `it_val_o` | out | std_logic | Set on a rising edge of `it_i`, held until acknowledged |
+| `it_ack_i` | in | std_logic | Clears `it_val_o` (priority over a new edge) |
+
+## Register Map
+
+The register map is generated by regtool from [hdl/csr/GIC.hjson](hdl/csr/GIC.hjson):
+
+- Register documentation: **[hdl/csr/GIC_csr.md](hdl/csr/GIC_csr.md)**
+- C header: [hdl/csr/GIC_csr.h](hdl/csr/GIC_csr.h)
+
+Notes:
+
+- `isr` (rw1c) is written by hardware every cycle (`hw2sw.isr.we = '1'`) with the `GIC_core` result; bit i corresponds to `its_i(i)`.
+- `imr` resets to 0x00: all lines are masked after reset.
+
+## Verification
+
+### Testbenches
+
+| File | DUT | Description |
+|------|-----|-------------|
+| [sim/tb_GIC.vhd](sim/tb_GIC.vhd) | `sbi_GIC` | UVVM testbench with the SBI VIP (every access checked without wait state), generics `NB_LINES` (1 to 8) and `SYNC_MASK` (`ITS_SYNC_ENABLE`, bit i = line i). T1 reset values (`isr` = `imr` = 0, `itm_o` = 0), T2 `imr` read / write, T3 masked lines are not latched, T4 per line: only the unmasked line is latched with every line active, the bit stays set after the line falls, cleared by writing 1, T5 latency `its_i` -> `itm_o` per line (1 cycle without synchronizer, 3 cycles with it) and capture of a 1-cycle pulse, T6 rw1c (write 0 no effect, write 0x55 / 0xAA clears even / odd bits, `itm_o` = OR(ISR)), T7 a bit cleared while its source is active reads 0 during one cycle and is set again, T8 masking a latched line does not clear it, T9 32 random `imr` / line patterns checked against `isr = OR(imr and its)` and `itm_o = OR(isr)` with random clears, T10 asynchronous reset. ISR bits above `NB_LINES` are checked to stay 0 |
+
+### Targets
+
+| Target | Toplevel | Description |
+|--------|----------|-------------|
+| `default` | `sbi_GIC` | HDL fileset + CSR generation (not a simulation) |
+| `sim_gic_8_nosync` | `tb_GIC` | 8 lines, no synchronizer (217 checks) |
+| `sim_gic_8_sync` | `tb_GIC` | 8 lines, synchronizer on every line (217 checks) |
+| `sim_gic_3_mixed` | `tb_GIC` | 3 lines, synchronizer on lines 0 and 2 (157 checks, latency 3 / 1 / 3 cycles) |
+| `sim_gic_1_sync` | `tb_GIC` | 1 line with synchronizer (133 checks) |
+
+### How to Run
+
+The default tool is GHDL (`mk/defs.mk`: `TOOL ?= ghdl`, `TARGET ?= sim_gic_8_nosync`).
+
+```bash
+make help                     # variables, rules and target list (mk/targets.txt)
+make sim_gic_3_mixed          # run one target (log in log/)
+make nonreg_sim               # run every sim_* target
+make clean                    # remove build/ and log/
+```
+
+Equivalent FuseSoC command (the generics can be overridden on the command line):
+
+```bash
+fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:1.2.2 --NB_LINES=5
+```
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` target. `GIC_core` is also exercised by the interrupt tests of other IPs (e.g. `tb_GPIO_irq` in `asylum-component-gpio`).
+
+## Synthesis
+
+No dedicated synthesis target. The HDL sources of the `default` target (`hdl/*.vhd` + generated CSR) contain no simulation-only construct and are synthesizable (`GIC_core` and `sbi_GIC` only have unused `textio` `use` clauses). Resources: two 8-bit CSR registers, the combinational `GIC_core` and two flip-flops per line selected by `ITS_SYNC_ENABLE`.
+
+## Design Notes
+
+### Interrupt Flow
+
+- `isr_next = (imr and its) or isr`, written every cycle: only unmasked lines are latched, and a latched bit stays set until software writes 1 to it.
+- `itm_o = or(isr)`: the output follows the registered ISR (one cycle after the source) and is not masked again, so masking a line does not remove a bit already latched.
+- The sources are level-sensitive: a bit cleared while its source is still active and unmasked is set again on the next cycle. Clear the source first, then the ISR bit.
+- Lines without synchronizer (`ITS_SYNC_ENABLE(i) = '0'`) must already be synchronous to `clk_i`.
+
+### it_ctrl
+
+`it_ctrl` registers `it_i`, sets `it_val_o` on a rising edge (`it_i and not it_r`) and clears it on `it_ack_i`. It is provided as a building block and declared in `GIC_pkg`, but `sbi_GIC` does not use it.
+
+## Directory Structure
+
+```
+asylum-system-gic/
+├── GIC.core                # FuseSoC core (asylum:system:GIC)
+├── Makefile                # Common Asylum Makefile (FuseSoC wrapper)
+├── mk/
+│   ├── defs.mk             # FILE_CORE, default TARGET and TOOL
+│   └── targets.txt         # Target list (generated from the .core)
+├── .github/workflows/
+│   └── ci.yml              # CI (one job per sim_* target, generated by make ci_generate)
+├── doc/
+│   └── GIC.drawio          # Block diagram
+├── sim/
+│   └── tb_GIC.vhd          # UVVM testbench
+└── hdl/
+    ├── GIC_pkg.vhd
+    ├── it_ctrl.vhd
+    ├── GIC_core.vhd
+    ├── sbi_GIC.vhd
+    └── csr/
+        ├── GIC.hjson        # Register description (source)
+        ├── GIC_csr.vhd      # Generated
+        ├── GIC_csr_pkg.vhd  # Generated
+        ├── GIC_csr.md       # Generated
+        └── GIC_csr.h        # Generated
+```
+
+## Dependencies
+
+| Core | Used by (fileset) | Purpose |
+|------|-------------------|---------|
+| `asylum:utils:generators` | `hdl` | regtool generator and CSR building blocks (`csr_reg`) |
+| `asylum:utils:pkg` | `hdl` | Common packages (`sbi_pkg`, `pbi_pkg`, `logic_pkg` for `reduce_or`) |
+| `asylum:target:techmap` | `hdl` | `sync2dffrn` synchronizer (`techmap_pkg`) |
+| `bitvis:verification:uvvm` | `sim` | UVVM utility library and SBI VIP (`bitvis_vip_sbi`) |

@@ -1,3 +1,3 @@
 FILE_CORE	?= GIC.core
-TARGET          ?=
-TOOL		?=
+TARGET          ?= sim_gic_8_nosync
+TOOL		?= ghdl

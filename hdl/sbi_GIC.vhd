@@ -17,6 +17,8 @@
 -- Revisions  :
 -- Date        Version  Author  Description
 -- 2025-07-04  0.1      mrosiere Created
+-- 2026-10-05  0.2      mrosiere Add assertions on the number of lines (<= 8)
+--                               and the ITS_SYNC_ENABLE length
 -------------------------------------------------------------------------------
 
 library IEEE;
@@ -59,6 +61,17 @@ architecture rtl of sbi_GIC is
   signal   hw2sw                  : GIC_hw2sw_t;
 
 begin  -- architecture rtl
+
+  -----------------------------------------------------------------------------
+  -- Parameters checks
+  -----------------------------------------------------------------------------
+  assert its_i'length <= GIC_DATA_WIDTH
+    report "sbi_GIC : its_i has "&integer'image(its_i'length)&" lines, the ISR has only "&integer'image(GIC_DATA_WIDTH)&" bits"
+    severity failure;
+
+  assert ITS_SYNC_ENABLE'length = its_i'length
+    report "sbi_GIC : ITS_SYNC_ENABLE ("&integer'image(ITS_SYNC_ENABLE'length)&" bits) must have the same length as its_i ("&integer'image(its_i'length)&" lines)"
+    severity failure;
 
   gen_its_sync: for i in ITS_SYNC_ENABLE'range
   generate
