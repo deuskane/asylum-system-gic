@@ -185,7 +185,7 @@ The CSR bank uses 1 address bit (`GIC_ADDR_WIDTH = 1`) and 8-bit data (`GIC_DATA
 | `arstn_i` | in | std_logic | Asynchronous reset, active low |
 | `it_i` | in | std_logic | Interrupt line |
 | `it_val_o` | out | std_logic | Set on a rising edge of `it_i`, held until acknowledged |
-| `it_ack_i` | in | std_logic | Clears `it_val_o` (priority over a new edge) |
+| `it_ack_i` | in | std_logic | Clears `it_val_o`; a new edge in the same cycle has priority (it sets `it_val_o` again, the edge is not lost) |
 
 ## Register Map
 
@@ -251,7 +251,7 @@ No dedicated synthesis target. The HDL sources of the `default` target (`hdl/*.v
 
 ### it_ctrl
 
-`it_ctrl` registers `it_i`, sets `it_val_o` on a rising edge (`it_i and not it_r`) and clears it on `it_ack_i`. It is provided as a building block and declared in `GIC_pkg`, but `sbi_GIC` does not use it.
+`it_ctrl` registers `it_i`, sets `it_val_o` on a rising edge (`it_i and not it_r`) and clears it on `it_ack_i`: `it_val_next = edge or (it_val and not it_ack)`, so an edge that coincides with the acknowledge is kept. It is provided as a building block and declared in `GIC_pkg`, but `sbi_GIC` does not use it.
 
 ## Directory Structure
 

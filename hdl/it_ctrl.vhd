@@ -51,12 +51,10 @@ begin
       
     elsif clk_i'event and clk_i = '1' then  -- rising clock edge
       it_r <= it_i;
-      
-      if    it_ack_i = '1' then
-        it_val_r <= '0';
-      elsif it = '1' then
-        it_val_r <= '1';
-      end if;
+
+      -- A new edge has priority over the acknowledge of the same cycle :
+      -- the edge is kept instead of being lost
+      it_val_r <= it or (it_val_r and not it_ack_i);
     end if;
   end process p_it_val_r;
 
