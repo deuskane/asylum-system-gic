@@ -224,32 +224,36 @@ begin
     chk(GIC_ISR, x"00", "ISR still 0 (no active line)");
 
     -------------------------------------------------------------------------
-    log(ID_LOG_HDR, "T3 : Masked lines are not latched", C_SCOPE);
+    log(ID_LOG_HDR, "T3 : Masked lines are latched in the ISR but do not raise itm_o", C_SCOPE);
     -------------------------------------------------------------------------
     wr (GIC_IMR, x"00", "Mask every line");
     set_its(C_ALL);
     settle;
-    chk(GIC_ISR, x"00", "ISR = 0 with every line active and masked");
+    chk(GIC_ISR, to_isr(C_ALL), "ISR = every line with every line active and masked");
     chk_itm('0', "itm_o = 0 with every line masked");
     set_its(C_NONE);
     settle;
+    wr (GIC_ISR, x"FF", "Clear every ISR bit");
+    chk(GIC_ISR, x"00", "ISR cleared");
 
     -------------------------------------------------------------------------
-    log(ID_LOG_HDR, "T4 : Only the unmasked line is latched (every line active)", C_SCOPE);
+    log(ID_LOG_HDR, "T4 : Only the unmasked line raises itm_o (every line active and latched)", C_SCOPE);
     -------------------------------------------------------------------------
     for i in 0 to NB_LINES-1 loop
       wr (GIC_IMR, one_hot(i), "Unmask line " & integer'image(i));
       set_its(C_ALL);
       settle;
-      chk(GIC_ISR, one_hot(i), "ISR = line " & integer'image(i) & " only");
-      chk_itm('1', "itm_o = 1");
+      chk(GIC_ISR, to_isr(C_ALL), "ISR = every line (raw status)");
+      chk_itm('1', "itm_o = 1 (line " & integer'image(i) & " unmasked)");
       set_its(C_NONE);
       settle;
-      chk(GIC_ISR, one_hot(i), "ISR bit stays set after the line falls (latched)");
+      chk(GIC_ISR, to_isr(C_ALL), "ISR bits stay set after the lines fall (latched)");
       wr (GIC_ISR, one_hot(i), "Clear line " & integer'image(i) & " (write 1)");
-      chk(GIC_ISR, x"00", "ISR cleared");
+      chk(GIC_ISR, to_isr(C_ALL) and not one_hot(i), "Only line " & integer'image(i) & " cleared");
       wait until falling_edge(clk_i);
-      chk_itm('0', "itm_o = 0 after the clear");
+      chk_itm('0', "itm_o = 0 after the clear : the pending lines are masked");
+      wr (GIC_ISR, x"FF", "Clear every line");
+      chk(GIC_ISR, x"00", "ISR cleared");
     end loop;
 
     -------------------------------------------------------------------------
@@ -327,23 +331,39 @@ begin
     end loop;
 
     -------------------------------------------------------------------------
-    log(ID_LOG_HDR, "T8 : Masking a latched line does not clear it", C_SCOPE);
+    log(ID_LOG_HDR, "T8 : Masking a pending line drops itm_o without clearing it, a masked event is kept", C_SCOPE);
     -------------------------------------------------------------------------
     set_its(C_ALL);
     settle;
     wr (GIC_IMR, x"00", "Mask every line, sources still active");
     chk(GIC_ISR, to_isr(C_ALL), "ISR bits stay set after masking");
     wait until falling_edge(clk_i);
-    chk_itm('1', "itm_o stays 1");
+    chk_itm('0', "itm_o = 0 : every pending line is masked");
+    wr (GIC_IMR, x"FF", "Unmask every line");
+    wait until falling_edge(clk_i);
+    chk_itm('1', "itm_o = 1 again after unmasking");
+    wr (GIC_IMR, x"00", "Mask every line");
     wr (GIC_ISR, x"FF", "Clear every bit");
     settle;
-    chk(GIC_ISR, x"00", "ISR stays 0 (lines masked although active)");
-    chk_itm('0', "itm_o = 0");
+    chk(GIC_ISR, to_isr(C_ALL), "Masked active lines are latched again (polling)");
+    chk_itm('0', "itm_o = 0 (lines masked)");
     set_its(C_NONE);
     settle;
+    wr (GIC_ISR, x"FF", "Clear every bit");
+    chk(GIC_ISR, x"00", "ISR cleared");
+    set_its(C_ALL);
+    set_its(C_NONE);
+    settle;
+    chk(GIC_ISR, to_isr(C_ALL), "1-cycle pulses on masked lines are latched");
+    chk_itm('0', "itm_o = 0 (lines masked)");
+    wr (GIC_IMR, x"FF", "Unmask every line");
+    wait until falling_edge(clk_i);
+    chk_itm('1', "Unmasking the pending lines raises itm_o (event not lost)");
+    wr (GIC_ISR, x"FF", "Clear every bit");
+    chk(GIC_ISR, x"00", "ISR cleared");
 
     -------------------------------------------------------------------------
-    log(ID_LOG_HDR, "T9 : " & integer'image(C_NB_RANDOM) & " random IMR / line patterns : ISR = OR(IMR and its), itm_o = OR(ISR)", C_SCOPE);
+    log(ID_LOG_HDR, "T9 : " & integer'image(C_NB_RANDOM) & " random IMR / line patterns : ISR = OR(its), itm_o = OR(ISR and IMR)", C_SCOPE);
     -------------------------------------------------------------------------
     v_isr := x"00";
     for n in 1 to C_NB_RANDOM loop
@@ -355,10 +375,10 @@ begin
       set_its(v_its);
       set_its(C_NONE);
       settle;
-      v_isr := v_isr or (v_imr and to_isr(v_its));
-      chk(GIC_ISR, v_isr, "ISR accumulates the unmasked lines");
+      v_isr := v_isr or to_isr(v_its);
+      chk(GIC_ISR, v_isr, "ISR accumulates every line");
       wait until falling_edge(clk_i);
-      chk_itm(or v_isr, "itm_o = OR(ISR)");
+      chk_itm(or (v_isr and v_imr), "itm_o = OR(ISR and IMR)");
       -- clear a random subset
       uniform(v_seed1, v_seed2, v_r);
       v_clr := std_logic_vector(to_unsigned(integer(floor(v_r * 256.0)), 8));
