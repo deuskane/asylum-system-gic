@@ -49,6 +49,10 @@ architecture sim of tb_GIC is
   constant C_ITS_SYNC_ENABLE : std_logic_vector(NB_LINES-1 downto 0) :=
     std_logic_vector(to_unsigned(SYNC_MASK mod 2**NB_LINES, NB_LINES));
 
+  -- Same value with an ascending range : the DUT maps ITS_SYNC_ENABLE and its_i
+  -- by position (rightmost element = line 0), whatever their bounds and direction
+  constant C_ITS_SYNC_ENABLE_ASC : std_logic_vector(0 to NB_LINES-1) := C_ITS_SYNC_ENABLE;
+
   -- Zero wait state target : any cycle with ready = '0' is an error
   constant C_SBI_CFG    : t_sbi_bfm_config := (
     max_wait_cycles            => 0,
@@ -80,7 +84,8 @@ architecture sim of tb_GIC is
                                    wdata(C_DATA_WIDTH-1 downto 0),
                                    rdata(C_DATA_WIDTH-1 downto 0));
 
-  signal its_i          : std_logic_vector(NB_LINES-1 downto 0) := (others => '0');
+  -- Bounds not starting at 0 on purpose : line i = its_i(i+1)
+  signal its_i          : std_logic_vector(NB_LINES downto 1) := (others => '0');
   signal itm_o          : std_logic;
 
 begin
@@ -90,7 +95,7 @@ begin
   ins_dut : sbi_GIC
     generic map (
       NAME            => "GIC",
-      ITS_SYNC_ENABLE => C_ITS_SYNC_ENABLE
+      ITS_SYNC_ENABLE => C_ITS_SYNC_ENABLE_ASC
     )
     port map (
       clk_i           => clk_i,

@@ -56,7 +56,12 @@ end entity sbi_GIC;
 
 architecture rtl of sbi_GIC is
 
-  signal   its_sync               : std_logic_vector(its_i'range);
+  -- The lines are mapped by position, whatever the bounds and the direction
+  -- of its_i and ITS_SYNC_ENABLE : the rightmost element is line 0
+  alias    its_n                  : std_logic_vector(its_i'length-1 downto 0) is its_i;
+  alias    its_sync_enable_n      : std_logic_vector(ITS_SYNC_ENABLE'length-1 downto 0) is ITS_SYNC_ENABLE;
+
+  signal   its_sync               : std_logic_vector(its_i'length-1 downto 0);
   signal   sw2hw                  : GIC_sw2hw_t;
   signal   hw2sw                  : GIC_hw2sw_t;
 
@@ -73,25 +78,25 @@ begin  -- architecture rtl
     report "sbi_GIC : ITS_SYNC_ENABLE ("&integer'image(ITS_SYNC_ENABLE'length)&" bits) must have the same length as its_i ("&integer'image(its_i'length)&" lines)"
     severity failure;
 
-  gen_its_sync: for i in ITS_SYNC_ENABLE'range
+  gen_its_sync: for i in 0 to its_i'length-1
   generate
 
     gen_syncdff :
-    if (ITS_SYNC_ENABLE(i) = '1')
+    if (its_sync_enable_n(i) = '1')
     generate
       ins_it_sync : sync2dffrn
         port map
         (clk_i    => clk_i
         ,arst_b_i => arst_b_i
-        ,d_i      => its_i(i)
+        ,d_i      => its_n(i)
         ,q_o      => its_sync(i)
          );
     end generate;
 
     gen_syncdff_b :
-    if (ITS_SYNC_ENABLE(i) = '0')
+    if (its_sync_enable_n(i) = '0')
     generate
-      its_sync(i) <= its_i(i);
+      its_sync(i) <= its_n(i);
     end generate;
 
   end generate;

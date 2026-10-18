@@ -47,12 +47,23 @@ end entity GIC_core;
 
 architecture rtl of GIC_core is
 
+  -- The lines are mapped by position, whatever the bounds and the direction
+  -- of its_i : the rightmost element of its_i is line 0 = ISR bit 0
+  alias    its_n : std_logic_vector(its_i'length-1 downto 0) is its_i;
+
   signal   its : std_logic_vector(isr_i'range);
   signal   isr : std_logic_vector(isr_i'range);
   
 begin  -- architecture rtl
 
-  its   <= std_logic_vector(resize(unsigned(its_i), its'length));
+  -----------------------------------------------------------------------------
+  -- Parameters checks
+  -----------------------------------------------------------------------------
+  assert its_i'length <= isr_i'length
+    report "GIC_core : its_i has "&integer'image(its_i'length)&" lines, the ISR has only "&integer'image(isr_i'length)&" bits"
+    severity failure;
+
+  its   <= std_logic_vector(resize(unsigned(its_n), its'length));
   isr   <= (imr_i and its) or isr_i;
   isr_o <= isr;
   itm_o <= reduce_or(isr_i);
