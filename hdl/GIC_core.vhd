@@ -64,8 +64,10 @@ begin  -- architecture rtl
     severity failure;
 
   its   <= std_logic_vector(resize(unsigned(its_n), its'length));
-  isr   <= (imr_i and its) or isr_i;
+  -- The ISR latches the raw events (masked lines included : polling possible,
+  -- no event lost while masked), the IMR only masks the merged output
+  isr   <= its or isr_i;
   isr_o <= isr;
-  itm_o <= reduce_or(isr_i);
+  itm_o <= reduce_or(isr_i and imr_i);
 
 end architecture rtl;
