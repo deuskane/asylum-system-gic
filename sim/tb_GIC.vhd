@@ -187,6 +187,38 @@ begin
       end if;
     end function;
 
+    -- W1C of ISR bit i sampled at the edge Rw, with a 1-cycle pulse on line i
+    -- that reaches the ISR logic at the edge Rw + o (synchronizer included).
+    -- The SBI write is driven directly to control its cycle.
+    procedure w1c_pulse(constant i : in natural; constant o : in integer) is
+      constant C_P : integer := o - lat(i) + 1; -- edge where its_i(i) is sampled, relative to Rw
+      variable v   : std_logic_vector(NB_LINES-1 downto 0);
+    begin
+      for k in minimum(C_P, 0) to maximum(C_P, 0) loop
+        wait until falling_edge(clk_i);
+        v := (others => '0');
+        if k = C_P then
+          v(i) := '1';
+        end if;
+        its_i <= v;
+        if k = 0 then
+          sbi_if.cs    <= '1';
+          sbi_if.wena  <= '1';
+          sbi_if.addr  <= GIC_ISR;
+          sbi_if.wdata <= one_hot(i);
+        else
+          sbi_if.cs    <= '0';
+          sbi_if.wena  <= '0';
+        end if;
+      end loop;
+      wait until falling_edge(clk_i);
+      its_i        <= (others => '0');
+      sbi_if.cs    <= '0';
+      sbi_if.wena  <= '0';
+      sbi_if.addr  <= (others => '0');
+      sbi_if.wdata <= (others => '0');
+    end procedure;
+
     procedure do_reset is
     begin
       arst_b_i <= '0';
@@ -307,7 +339,7 @@ begin
     chk_itm('0', "itm_o = 0");
 
     -------------------------------------------------------------------------
-    log(ID_LOG_HDR, "T7 : ISR bit set again when the source stays active", C_SCOPE);
+    log(ID_LOG_HDR, "T7 : W1C while the source is active : a level sets the bit again, a pulse in the W1C cycle is not lost", C_SCOPE);
     -------------------------------------------------------------------------
     for i in 0 to NB_LINES-1 loop
       v_its    := C_NONE;
@@ -315,7 +347,8 @@ begin
       set_its(v_its);
       settle;
       wr (GIC_ISR, one_hot(i), "Clear line " & integer'image(i) & " while the source is active");
-      -- The clear wins during one cycle, the active source sets the bit again on the next cycle
+      -- The clear empties the bit during one cycle, the active source (and the
+      -- replay of the W1C cycle) sets it again on the next cycle
       chk(GIC_ISR, x"00"      , "ISR bit cleared during one cycle");
       chk(GIC_ISR, one_hot(i) , "ISR bit set again (source still active)");
       wait until falling_edge(clk_i);
@@ -324,6 +357,23 @@ begin
       settle;
       wr (GIC_ISR, one_hot(i), "Clear line " & integer'image(i) & " after the source falls");
       chk(GIC_ISR, x"00", "ISR stays cleared");
+
+      -- 1-cycle pulse one cycle before, in the cycle of, or one cycle after
+      -- the W1C of the (already set) bit : only the pulse before is cleared
+      for o in -1 to 1 loop
+        set_its(v_its);
+        set_its(C_NONE);
+        settle;
+        chk(GIC_ISR, one_hot(i), "ISR bit set before the W1C");
+        w1c_pulse(i, o);
+        settle;
+        if o < 0 then
+          chk(GIC_ISR, x"00"      , "Line " & integer'image(i) & " pulse 1 cycle before the W1C : cleared by the W1C");
+        else
+          chk(GIC_ISR, one_hot(i) , "Line " & integer'image(i) & " pulse " & integer'image(o) & " cycle(s) after the W1C : not lost");
+        end if;
+        wr (GIC_ISR, one_hot(i), "Clear");
+      end loop;
     end loop;
 
     -------------------------------------------------------------------------

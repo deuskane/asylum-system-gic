@@ -57,6 +57,8 @@ end entity sbi_GIC;
 architecture rtl of sbi_GIC is
 
   signal   its_sync               : std_logic_vector(its_i'range);
+  signal   its_hold_r             : std_logic_vector(its_i'range);
+  signal   its                    : std_logic_vector(its_i'range);
   signal   sw2hw                  : GIC_sw2hw_t;
   signal   hw2sw                  : GIC_hw2sw_t;
 
@@ -95,7 +97,27 @@ begin  -- architecture rtl
     end generate;
 
   end generate;
-  
+
+  -----------------------------------------------------------------------------
+  -- W1C / interrupt collision
+  -- The rw1c ISR gives the priority to the software clear (csr_reg :
+  -- q_next = d_hw and not wd) : an event of the cycle of an ISR write would be
+  -- cleared with it and a 1-cycle pulse would be lost. The lines are held one
+  -- cycle and replayed in the cycle that follows an ISR write
+  -- (sw2hw.isr.we is the ISR write strobe delayed by one cycle).
+  -- The IMR can not change in that cycle (the previous access was the ISR write)
+  -----------------------------------------------------------------------------
+  p_its_hold: process (clk_i, arst_b_i) is
+  begin
+    if arst_b_i = '0' then
+      its_hold_r <= (others => '0');
+    elsif rising_edge(clk_i) then
+      its_hold_r <= its_sync;
+    end if;
+  end process p_its_hold;
+
+  its <= its_sync or its_hold_r when sw2hw.isr.we = '1' else
+         its_sync;
   
   ins_csr : GIC_registers
   generic map(
@@ -113,7 +135,7 @@ begin  -- architecture rtl
   ins_GIC_core : GIC_core
   port map(
     itm_o     => itm_o           ,
-    its_i     => its_sync        ,
+    its_i     => its             ,
     isr_i     => sw2hw.isr.value ,
     isr_o     => hw2sw.isr.value ,
     imr_i     => sw2hw.imr.enable
