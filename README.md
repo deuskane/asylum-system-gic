@@ -216,6 +216,8 @@ Notes:
 | `sim_gic_8_sync` | `tb_GIC` | 8 lines, synchronizer on every line (217 checks) |
 | `sim_gic_3_mixed` | `tb_GIC` | 3 lines, synchronizer on lines 0 and 2 (157 checks, latency 3 / 1 / 3 cycles) |
 | `sim_gic_1_sync` | `tb_GIC` | 1 line with synchronizer (133 checks) |
+| `lint_ghdl` | `sbi_GIC_synth_top` | Lint: GHDL `-Wall` analysis and elaboration (empty simulation) of `sbi_GIC` (flat SBI ports, `NB_LINES` lines) and `it_ctrl` in a wrapper (`syn/ghdl/sbi_GIC_synth_top.vhd`) |
+| `lint_ghdl_synth` | `sbi_GIC_synth_top` | Synthesis check: `lint_ghdl`, then `ghdl --synth -Wall` of 4 configurations (`syn/ghdl/ghdl_synth.sh`: 8 lines without synchronizer (defaults), 8 lines with synchronizer, 3 lines mixed, 1 line with synchronizer), fails on a synthesis error or an inferred latch |
 
 ### How to Run
 
@@ -225,6 +227,8 @@ The default tool is GHDL (`mk/defs.mk`: `TOOL ?= ghdl`, `TARGET ?= sim_gic_8_nos
 make help                     # variables, rules and target list (mk/targets.txt)
 make sim_gic_3_mixed          # run one target (log in log/)
 make nonreg_sim               # run every sim_* target
+make lint_ghdl                # GHDL -Wall lint (make nonreg_lint: every lint_* target)
+make lint_ghdl_synth          # GHDL -Wall lint + ghdl --synth -Wall check
 make clean                    # remove build/ and log/
 ```
 
@@ -238,7 +242,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` tar
 
 ## Synthesis
 
-No dedicated synthesis target. The HDL sources of the `default` target (`hdl/*.vhd` + generated CSR) contain no simulation-only construct and are synthesizable (`GIC_core` and `sbi_GIC` only have unused `textio` `use` clauses). Resources: two 8-bit CSR registers, the combinational `GIC_core` and two flip-flops per line selected by `ITS_SYNC_ENABLE`.
+No vendor synthesis target (`lint_ghdl_synth` checks the RTL with `ghdl --synth`, see [Targets](#targets)). The HDL sources of the `default` target (`hdl/*.vhd` + generated CSR) contain no simulation-only construct and are synthesizable (`GIC_core` and `sbi_GIC` only have unused `textio` `use` clauses). Resources: two 8-bit CSR registers, the combinational `GIC_core` and two flip-flops per line selected by `ITS_SYNC_ENABLE`.
 
 ## Design Notes
 
@@ -268,6 +272,9 @@ asylum-system-gic/
 │   └── GIC.drawio          # Block diagram
 ├── sim/
 │   └── tb_GIC.vhd          # UVVM testbench
+├── syn/ghdl/
+│   ├── sbi_GIC_synth_top.vhd  # Lint / synthesis check top (flat SBI ports + it_ctrl)
+│   └── ghdl_synth.sh       # ghdl --synth check (post_run hook of lint_ghdl_synth)
 └── hdl/
     ├── GIC_pkg.vhd
     ├── it_ctrl.vhd

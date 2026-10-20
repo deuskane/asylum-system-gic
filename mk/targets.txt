@@ -1,4 +1,6 @@
 default          : Default Target
+lint_ghdl        : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_synth_top)
+lint_ghdl_synth  : Synthesis check, ghdl --synth -Wall of sbi_GIC_synth_top (4 configurations)
 sim_gic_1_sync   : Simulation of sbi_GIC with VIP - 1 line with synchronizer
 sim_gic_3_mixed  : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
 sim_gic_8_nosync : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
