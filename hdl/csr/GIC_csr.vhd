@@ -84,7 +84,6 @@ architecture rtl of GIC_registers is
   signal   imr_we        : std_logic;
   signal   imr_wdata     : std_logic_vector(8-1 downto 0);
   signal   imr_wdata_sw  : std_logic_vector(8-1 downto 0);
-  signal   imr_wdata_hw  : std_logic_vector(8-1 downto 0);
   signal   imr_wbusy     : std_logic;
 
   signal   imr_rcs       : std_logic;
@@ -133,15 +132,15 @@ begin  -- architecture rtl
     isr_rcs     <= '1' when (sig_raddr = GIC_ISR) else '0';
     isr_re      <= sig_rcs and sig_re and isr_rcs;
     isr_rdata   <= (
-      0 => isr_rdata_sw(0), -- value(0)
-      1 => isr_rdata_sw(1), -- value(1)
-      2 => isr_rdata_sw(2), -- value(2)
-      3 => isr_rdata_sw(3), -- value(3)
-      4 => isr_rdata_sw(4), -- value(4)
-      5 => isr_rdata_sw(5), -- value(5)
-      6 => isr_rdata_sw(6), -- value(6)
-      7 => isr_rdata_sw(7), -- value(7)
-      others => '0');
+       0 => isr_rdata_sw(0) -- value(0)
+      ,1 => isr_rdata_sw(1) -- value(1)
+      ,2 => isr_rdata_sw(2) -- value(2)
+      ,3 => isr_rdata_sw(3) -- value(3)
+      ,4 => isr_rdata_sw(4) -- value(4)
+      ,5 => isr_rdata_sw(5) -- value(5)
+      ,6 => isr_rdata_sw(6) -- value(6)
+      ,7 => isr_rdata_sw(7) -- value(7)
+      );
 
     isr_wcs     <= '1' when       (sig_waddr = GIC_ISR)   else '0';
     isr_we      <= sig_wcs and sig_we and isr_wcs;
@@ -207,15 +206,15 @@ begin  -- architecture rtl
     imr_rcs     <= '1' when (sig_raddr = GIC_IMR) else '0';
     imr_re      <= sig_rcs and sig_re and imr_rcs;
     imr_rdata   <= (
-      0 => imr_rdata_sw(0), -- enable(0)
-      1 => imr_rdata_sw(1), -- enable(1)
-      2 => imr_rdata_sw(2), -- enable(2)
-      3 => imr_rdata_sw(3), -- enable(3)
-      4 => imr_rdata_sw(4), -- enable(4)
-      5 => imr_rdata_sw(5), -- enable(5)
-      6 => imr_rdata_sw(6), -- enable(6)
-      7 => imr_rdata_sw(7), -- enable(7)
-      others => '0');
+       0 => imr_rdata_sw(0) -- enable(0)
+      ,1 => imr_rdata_sw(1) -- enable(1)
+      ,2 => imr_rdata_sw(2) -- enable(2)
+      ,3 => imr_rdata_sw(3) -- enable(3)
+      ,4 => imr_rdata_sw(4) -- enable(4)
+      ,5 => imr_rdata_sw(5) -- enable(5)
+      ,6 => imr_rdata_sw(6) -- enable(6)
+      ,7 => imr_rdata_sw(7) -- enable(7)
+      );
 
     imr_wcs     <= '1' when       (sig_waddr = GIC_IMR)   else '0';
     imr_we      <= sig_wcs and sig_we and imr_wcs;
