@@ -54,7 +54,7 @@ filesets:
     file_type    : vhdlSource
     logical_name : asylum
     depend       :
-      - asylum:utils:generators
+      - ">=asylum:utils:generators:2.8.0"
       - asylum:utils:pkg
       - asylum:target:techmap
 
@@ -68,13 +68,12 @@ filesets:
       - bitvis:verification:uvvm
 
   #---------------------------------------
-  # Lint Files (post_run hook of lint_ghdl_synth)
+  syn:
   #---------------------------------------
-  files_lint:
-    files:
-      - syn/ghdl/sbi_GIC_synth_top.vhd
-      - syn/ghdl/ghdl_synth.sh : {file_type : user, copyto : ghdl_synth.sh}
-    file_type : vhdlSource-2008
+    files        :
+      - syn/sbi_GIC_wrapper.vhd
+    file_type    : vhdlSource-2008
+    logical_name : asylum
 
 #=========================================
 targets:
@@ -94,31 +93,57 @@ targets:
   #---------------------------------------
   # Lint : -Wall analysis and elaboration (empty simulation)
   #---------------------------------------
-  lint_ghdl :
+  lint_ghdl : &lint_ghdl
     << : *default
-    description     : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_synth_top)
-    toplevel        : sbi_GIC_synth_top
-    filesets_append : [files_lint]
+    description     : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_wrapper)
+    toplevel        : asylum.sbi_GIC_wrapper
+    filesets_append : [syn]
     default_tool    : ghdl
     tools :
       ghdl :
         analyze_options : ["-Wall"]
 
   #---------------------------------------
-  # Synthesis check : lint_ghdl, then ghdl --synth -Wall of sbi_GIC_synth_top
-  # for each configuration of syn/ghdl/ghdl_synth.sh (post_run hook)
+  # Synthesis check : -Wall analysis, ghdl --synth -Wall and elaboration
+  # (no simulation) of sbi_GIC_wrapper with the generics of the target.
+  # The pre_run hook (ghdl_synth.sh of asylum:utils:generators) adds
+  # ghdl_synth.mk to the edalize Makefile.
+  # FuseSoC merges tools in depth : analyze_options comes from lint_ghdl.
   #---------------------------------------
-  lint_ghdl_synth :
-    << : *default
-    description     : Synthesis check, ghdl --synth -Wall of sbi_GIC_synth_top (4 configurations)
-    toplevel        : sbi_GIC_synth_top
-    filesets_append : [files_lint]
-    default_tool    : ghdl
+  lint_ghdl_synth_default : &lint_ghdl_synth
+    << : *lint_ghdl
+    description     : Synthesis check of sbi_GIC_wrapper, 8 lines without synchronizer (default generics)
     tools :
       ghdl :
-        analyze_options : ["-Wall"]
+        run_options     : ["--no-run"]
     hooks :
-      post_run : [ghdl_synth]
+      pre_run : [ghdl_synth]
+
+  #---------------------------------------
+  lint_ghdl_synth_sync8 :
+  #---------------------------------------
+    << : *lint_ghdl_synth
+    description     : Synthesis check of sbi_GIC_wrapper, 8 lines with synchronizer
+    parameters      :
+      - ITS_SYNC_ENABLE=11111111
+
+  #---------------------------------------
+  lint_ghdl_synth_mixed3 :
+  #---------------------------------------
+    << : *lint_ghdl_synth
+    description     : Synthesis check of sbi_GIC_wrapper, 3 lines, mixed
+    parameters      :
+      - NB_LINES=3
+      - ITS_SYNC_ENABLE=101
+
+  #---------------------------------------
+  lint_ghdl_synth_sync1 :
+  #---------------------------------------
+    << : *lint_ghdl_synth
+    description     : Synthesis check of sbi_GIC_wrapper, 1 line with synchronizer
+    parameters      :
+      - NB_LINES=1
+      - ITS_SYNC_ENABLE=1
 
   #---------------------------------------
   sim_gic_8_nosync:
@@ -193,7 +218,7 @@ scripts:
 #=========================================
 
   #---------------------------------------
-  # Hook of lint_ghdl_synth (cwd = work_root)
+  # pre_run hook of lint_ghdl_synth_* (cwd = work_root)
   #---------------------------------------
   ghdl_synth :
     cmd : [bash, ghdl_synth.sh]
@@ -212,4 +237,13 @@ parameters :
     description : ITS_SYNC_ENABLE of the testbench, bit i = synchronizer on line i
     datatype    : int
     default     : 0
+    paramtype   : generic
+
+  #---------------------------------------
+  # Generics of sbi_GIC_wrapper (lint_ghdl_synth_*)
+  #---------------------------------------
+  ITS_SYNC_ENABLE :
+    description : Synchronizer on interrupt line i (NB_LINES-bit string)
+    datatype    : str
+    default     : "00000000"
     paramtype   : generic

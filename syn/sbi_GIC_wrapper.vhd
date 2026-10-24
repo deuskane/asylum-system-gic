@@ -1,23 +1,28 @@
 -------------------------------------------------------------------------------
--- Title      : sbi_GIC_synth_top
+-- Title      : sbi_GIC_wrapper
 -- Project    : Asylum
 -------------------------------------------------------------------------------
--- File       : sbi_GIC_synth_top.vhd
+-- File       : sbi_GIC_wrapper.vhd
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description:
--- Synthesis check top (lint_ghdl, lint_ghdl_synth) : sbi_GIC with flat and
+-- Wrapper (lint_ghdl, lint_ghdl_synth_*) : sbi_GIC with flat and
 -- constrained ports (sbi_GIC has unconstrained SBI and its_i ports and cannot
 -- be a synthesis top), and it_ctrl (in the hdl fileset, not instantiated by
 -- sbi_GIC). SBI address / data width : SBI_ADDR_WIDTH / SBI_DATA_WIDTH.
 -- NB_LINES sets the length of its_i, ITS_SYNC_ENABLE is forwarded (NAME is
 -- only in sbi_tgt.info, not connected).
+-- ITS_SYNC_ENABLE is unconstrained (length NB_LINES) : with GHDL 6.0.0, the
+-- override (-g) of a generic whose subtype depends on another generic
+-- fails at elaboration (NULL access) when it is forwarded to an instance.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-10-20  1.0      mrosiere Created
+-- 2026-10-24  1.1      mrosiere Was sbi_GIC_synth_top, library asylum
+--                               ITS_SYNC_ENABLE unconstrained
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -25,10 +30,10 @@ use     ieee.std_logic_1164.all;
 library asylum;
 use     asylum.sbi_pkg.all;
 
-entity sbi_GIC_synth_top is
+entity sbi_GIC_wrapper is
   generic (
     NB_LINES         : positive := 8;
-    ITS_SYNC_ENABLE  : std_logic_vector(NB_LINES-1 downto 0) := (others => '0')
+    ITS_SYNC_ENABLE  : std_logic_vector := "00000000"
   );
   port (
     clk_i         : in  std_logic;
@@ -52,9 +57,9 @@ entity sbi_GIC_synth_top is
     it_val_o      : out std_logic;
     it_ack_i      : in  std_logic
   );
-end entity sbi_GIC_synth_top;
+end entity sbi_GIC_wrapper;
 
-architecture rtl of sbi_GIC_synth_top is
+architecture rtl of sbi_GIC_wrapper is
 
   signal sbi_ini       : sbi_ini_t(addr (SBI_ADDR_WIDTH-1 downto 0),
                                    wdata(SBI_DATA_WIDTH-1 downto 0));
