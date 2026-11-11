@@ -115,12 +115,16 @@ begin  -- architecture rtl
     hw2sw_i   => hw2sw   
     );
 
+  -- isr_we_i : replay of the events cleared by a simultaneous W1C
   ins_GIC_core : GIC_core
   port map(
+    clk_i     => clk_i           ,
+    arst_b_i  => arst_b_i        ,
     itm_o     => itm_o           ,
     its_i     => its_sync        ,
     isr_i     => sw2hw.isr.value ,
     isr_o     => hw2sw.isr.value ,
+    isr_we_i  => sw2hw.isr.we    ,
     imr_i     => sw2hw.imr.enable
     );
 
