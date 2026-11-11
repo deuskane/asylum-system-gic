@@ -40,7 +40,7 @@
 
 **Small interrupt controller: up to 8 interrupt lines latched in a status register, per-line mask, merged interrupt output and CSR access over the SBI bus.**
 
-VLNV: `asylum:system:GIC:1.2.2`
+VLNV: `asylum:system:GIC:2.0.0`
 
 ## Table of Contents
 
@@ -255,8 +255,8 @@ make clean                    # remove build/ and log/
 Equivalent FuseSoC command (the generics can be overridden on the command line):
 
 ```bash
-fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:1.2.2 --NB_LINES=5
-fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:1.2.2 --TEST=edge_ack
+fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:2.0.0 --NB_LINES=5
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:2.0.0 --TEST=edge_ack
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` target. `GIC_core` is also exercised by the interrupt tests of other IPs (e.g. `tb_GPIO_irq` in `asylum-component-gpio`).
