@@ -1,4 +1,5 @@
 default                 : Default Target
+default_sim_it_ctrl     : Simulation of it_ctrl (scenario TEST)
 lint_ghdl               : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_wrapper)
 lint_ghdl_synth_default : Synthesis check of sbi_GIC_wrapper, 8 lines without synchronizer (default generics)
 lint_ghdl_synth_mixed3  : Synthesis check of sbi_GIC_wrapper, 3 lines, mixed
@@ -8,4 +9,6 @@ sim_gic_1_sync          : Simulation of sbi_GIC with VIP - 1 line with synchroni
 sim_gic_3_mixed         : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
 sim_gic_8_nosync        : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
 sim_gic_8_sync          : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
+sim_it_ctrl_edge        : Simulation of it_ctrl - rising edge latched until the acknowledge
+sim_it_ctrl_edge_ack    : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
 

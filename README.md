@@ -206,6 +206,7 @@ Notes:
 | File | DUT | Description |
 |------|-----|-------------|
 | [sim/tb_GIC.vhd](sim/tb_GIC.vhd) | `sbi_GIC` | UVVM testbench with the SBI VIP (every access checked without wait state), generics `NB_LINES` (1 to 8) and `SYNC_MASK` (`ITS_SYNC_ENABLE`, bit i = line i). T1 reset values (`isr` = `imr` = 0, `itm_o` = 0), T2 `imr` read / write, T3 masked lines are not latched, T4 per line: only the unmasked line is latched with every line active, the bit stays set after the line falls, cleared by writing 1, T5 latency `its_i` -> `itm_o` per line (1 cycle without synchronizer, 3 cycles with it) and capture of a 1-cycle pulse, T6 rw1c (write 0 no effect, write 0x55 / 0xAA clears even / odd bits, `itm_o` = OR(ISR)), T7 a bit cleared while its source is active reads 0 during one cycle and is set again, T8 masking a latched line does not clear it, T9 32 random `imr` / line patterns checked against `isr = OR(imr and its)` and `itm_o = OR(isr)` with random clears, T10 asynchronous reset. ISR bits above `NB_LINES` are checked to stay 0 |
+| [sim/tb_it_ctrl.vhd](sim/tb_it_ctrl.vhd) | `it_ctrl` | UVVM testbench, one scenario per run chosen by the generic `TEST` (procedures of [sim/common/tb_it_ctrl_pkg.vhd](sim/common/tb_it_ctrl_pkg.vhd)): `edge` a rising edge is latched until the acknowledge, a level that stays high is not latched again, a new edge is; `edge_ack` a rising edge in the cycle of the acknowledge is kept |
 
 ### Targets
 
@@ -216,6 +217,8 @@ Notes:
 | `sim_gic_8_sync` | `tb_GIC` | 8 lines, synchronizer on every line (217 checks) |
 | `sim_gic_3_mixed` | `tb_GIC` | 3 lines, synchronizer on lines 0 and 2 (157 checks, latency 3 / 1 / 3 cycles) |
 | `sim_gic_1_sync` | `tb_GIC` | 1 line with synchronizer (133 checks) |
+| `sim_it_ctrl_edge` | `tb_it_ctrl` | `it_ctrl`, scenario `edge` (8 checks) |
+| `sim_it_ctrl_edge_ack` | `tb_it_ctrl` | `it_ctrl`, scenario `edge_ack` (3 checks) |
 | `lint_ghdl` | `asylum.sbi_GIC_wrapper` | Lint: GHDL `-Wall` analysis and elaboration (empty simulation) of `sbi_GIC` (flat SBI ports, `NB_LINES` lines) and `it_ctrl` in a wrapper (`syn/sbi_GIC_wrapper.vhd`) |
 | `lint_ghdl_synth_default` | `asylum.sbi_GIC_wrapper` | Synthesis check (see below), 8 lines without synchronizer (default generics) |
 | `lint_ghdl_synth_sync8` | `asylum.sbi_GIC_wrapper` | Synthesis check, 8 lines with synchronizer: `ITS_SYNC_ENABLE=11111111` |
@@ -246,6 +249,7 @@ Equivalent FuseSoC command (the generics can be overridden on the command line):
 
 ```bash
 fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:1.2.2 --NB_LINES=5
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:1.2.2 --TEST=edge_ack
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` target. `GIC_core` is also exercised by the interrupt tests of other IPs (e.g. `tb_GPIO_irq` in `asylum-component-gpio`).
@@ -281,7 +285,10 @@ asylum-system-gic/
 ├── doc/
 │   └── GIC.drawio          # Block diagram
 ├── sim/
-│   └── tb_GIC.vhd          # UVVM testbench
+│   ├── tb_GIC.vhd          # UVVM testbench of sbi_GIC
+│   ├── tb_it_ctrl.vhd      # UVVM testbench of it_ctrl (generic TEST)
+│   └── common/
+│       └── tb_it_ctrl_pkg.vhd  # Scenarios of tb_it_ctrl
 ├── syn/
 │   └── sbi_GIC_wrapper.vhd    # Lint / synthesis check wrapper (flat SBI ports + it_ctrl)
 └── hdl/
