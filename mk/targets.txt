@@ -7,6 +7,7 @@ lint_ghdl_synth_sync1   : Synthesis check of sbi_GIC_wrapper, 1 line with synchr
 lint_ghdl_synth_sync8   : Synthesis check of sbi_GIC_wrapper, 8 lines with synchronizer
 sim_gic_1_sync          : Simulation of sbi_GIC with VIP - 1 line with synchronizer
 sim_gic_3_mixed         : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
+sim_gic_4_mixed         : Simulation of sbi_GIC with VIP - 4 lines, synchronizer on lines 0 and 1 (asymmetric mask)
 sim_gic_8_nosync        : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
 sim_gic_8_sync          : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
 sim_it_ctrl_edge        : Simulation of it_ctrl - rising edge latched until the acknowledge
