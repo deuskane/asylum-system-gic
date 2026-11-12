@@ -42,6 +42,11 @@ package GIC_pkg is
 -- [COMPONENT_INSERT][BEGIN]
 component GIC_core is
   port   (
+    -- Clock and reset of the W1C replay (optional : without arst_b_i the
+    -- replay register is held in reset, without isr_we_i it is not used)
+    clk_i            : in  std_logic := '0';
+    arst_b_i         : in  std_logic := '0'; -- asynchronous reset, active low
+
     -- Interrupt Interface
     itm_o            : out std_logic;        -- Interruption  Output (Merged) 
     its_i            : in  std_logic_vector; -- Interruptions Input
@@ -49,6 +54,7 @@ component GIC_core is
     -- IT Bank
     isr_i            : in  std_logic_vector; -- Interruption Statut register (Current)
     isr_o            : out std_logic_vector; -- Interruption Statut register (Next)
+    isr_we_i         : in  std_logic := '0'; -- Interruption Statut register written by software in the previous cycle (regtool sw2hw.isr.we)
     imr_i            : in  std_logic_vector  -- Interruption Mask   register (Current)
     );
 

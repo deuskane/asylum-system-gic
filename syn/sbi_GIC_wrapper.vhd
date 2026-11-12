@@ -22,6 +22,7 @@
 -- Date        Version  Author   Description
 -- 2026-10-20  1.0      mrosiere Created
 -- 2026-10-24  1.1      mrosiere Was sbi_GIC_synth_top, library asylum
+-- 2026-11-11  1.2      mrosiere GIC_core with the optional replay ports open
 --                               ITS_SYNC_ENABLE unconstrained
 -------------------------------------------------------------------------------
 
@@ -55,7 +56,15 @@ entity sbi_GIC_wrapper is
     -- it_ctrl
     it_i          : in  std_logic;
     it_val_o      : out std_logic;
-    it_ack_i      : in  std_logic
+    it_ack_i      : in  std_logic;
+
+    -- GIC_core with clk_i, arst_b_i and isr_we_i left open, as instantiated
+    -- by an IP that does not use the W1C replay
+    core_its_i    : in  std_logic_vector(NB_LINES-1 downto 0);
+    core_isr_i    : in  std_logic_vector(8-1 downto 0);
+    core_isr_o    : out std_logic_vector(8-1 downto 0);
+    core_imr_i    : in  std_logic_vector(8-1 downto 0);
+    core_itm_o    : out std_logic
   );
 end entity sbi_GIC_wrapper;
 
@@ -95,6 +104,15 @@ begin
       it_i            => it_i,
       it_val_o        => it_val_o,
       it_ack_i        => it_ack_i
+    );
+
+  ins_GIC_core : entity asylum.GIC_core
+    port map (
+      itm_o           => core_itm_o,
+      its_i           => core_its_i,
+      isr_i           => core_isr_i,
+      isr_o           => core_isr_o,
+      imr_i           => core_imr_i
     );
 
 end architecture rtl;

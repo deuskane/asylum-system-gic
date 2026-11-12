@@ -20,9 +20,16 @@ CAPI=2:
 # 2026-06-06  1.2.1    mrosiere Add Name
 # 2026-10-05  1.2.2    mrosiere Fix default target toplevel (sbi_GIC), assert number of
 #                               lines, add UVVM testbench
+# 2026-11-11  2.0.0    mrosiere ISR latches the masked lines too, the IMR masks itm_o only
+#                               (behaviour change for the software and for the IPs using
+#                               GIC_core) ; GIC_core : replay of the events cleared by a
+#                               simultaneous W1C (optional ports clk_i, arst_b_i, isr_we_i) ;
+#                               lines mapped by position ; it_ctrl keeps an edge coinciding
+#                               with the ack ; lint_ghdl / lint_ghdl_synth_* targets,
+#                               it_ctrl testbench
 #-----------------------------------------------------------------------------
 
-name        : asylum:system:GIC:1.2.2
+name        : asylum:system:GIC:2.0.0
 description : GIC Module
 
 #=========================================
