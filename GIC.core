@@ -68,6 +68,16 @@ filesets:
       - bitvis:verification:uvvm
 
   #---------------------------------------
+  sim_it_ctrl:
+  #---------------------------------------
+    files:
+      - sim/common/tb_it_ctrl_pkg.vhd
+      - sim/tb_it_ctrl.vhd
+    file_type : vhdlSource-2008
+    depend       :
+      - bitvis:verification:uvvm
+
+  #---------------------------------------
   syn:
   #---------------------------------------
     files        :
@@ -216,6 +226,40 @@ targets:
         analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
+  #---------------------------------------
+  # it_ctrl : compiled once, scenario chosen at run time (TEST),
+  # one sim_it_ctrl_<test> target per scenario
+  #---------------------------------------
+  default_sim_it_ctrl: &sim_it_ctrl
+    << : *default
+    description     : Simulation of it_ctrl (scenario TEST)
+    filesets_append :
+      - sim_it_ctrl
+    toplevel        : tb_it_ctrl
+    parameters      :
+      - TEST
+    default_tool    : ghdl
+    tools :
+      ghdl :
+        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
+        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
+
+  #---------------------------------------
+  sim_it_ctrl_edge:
+  #---------------------------------------
+    << : *sim_it_ctrl
+    description     : Simulation of it_ctrl - rising edge latched until the acknowledge
+    parameters      :
+      - TEST=edge
+
+  #---------------------------------------
+  sim_it_ctrl_edge_ack:
+  #---------------------------------------
+    << : *sim_it_ctrl
+    description     : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
+    parameters      :
+      - TEST=edge_ack
+
 #=========================================
 scripts:
 #=========================================
@@ -240,6 +284,12 @@ parameters :
     description : ITS_SYNC_ENABLE of the testbench, bit i = synchronizer on line i
     datatype    : int
     default     : 0
+    paramtype   : generic
+
+  TEST :
+    description : Scenario of tb_it_ctrl (edge, edge_ack)
+    datatype    : str
+    default     : edge
     paramtype   : generic
 
   #---------------------------------------
