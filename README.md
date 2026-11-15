@@ -40,7 +40,7 @@
 
 **Small interrupt controller: up to 8 interrupt lines latched in a status register, per-line mask, merged interrupt output and CSR access over the SBI bus.**
 
-VLNV: `asylum:system:GIC:1.2.2`
+VLNV: `asylum:system:GIC:2.0.0`
 
 ## Table of Contents
 
@@ -249,8 +249,8 @@ make clean                    # remove build/ and log/
 Equivalent FuseSoC command (the generics can be overridden on the command line):
 
 ```bash
-fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:1.2.2 --NB_LINES=5
-fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:1.2.2 --TEST=edge_ack
+fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:2.0.0 --NB_LINES=5
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:2.0.0 --TEST=edge_ack
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` target. `GIC_core` is also exercised by the interrupt tests of other IPs (e.g. `tb_GPIO_irq` in `asylum-component-gpio`).
@@ -266,6 +266,7 @@ No vendor synthesis target (the `lint_ghdl_synth_*` targets check the RTL with `
 - `isr_next = its or isr`, written every cycle: every line is latched, masked or not, and a latched bit stays set until software writes 1 to it. Software can poll the ISR with the lines masked, and an event that occurs while its line is masked is not lost.
 - `itm_o = or(isr and imr)`: the output follows the registered ISR (one cycle after the source) masked by the IMR, so masking a pending line drops `itm_o` (critical section) and unmasking it raises `itm_o` again. Clear the pending bits that must be ignored before unmasking a line.
 - The sources are level-sensitive: a bit cleared while its source is still active is set again on the next cycle. Clear the source first, then the ISR bit.
+- W1C / event collision: in the cycle of a software write of the ISR, the software clear has priority over a new event on the same bit (`rw1c` model of `csr_reg`, as the W1C registers of OpenTitan and the default `precedence = sw` of SystemRDL). Write 1 only on the bits whose event has been handled (typically the bits read and served): an event on a bit already set merges with the one being acknowledged (as any event between the ISR read and the write), while a write of 1 on a bit still at 0 can clear an event that the software has not seen yet. A constant mask is safe only when the handler has addressed every source and holds them inactive during the write (e.g. the PicoSoC supervisor resets the user CPUs before clearing the ISR).
 - Lines without synchronizer (`ITS_SYNC_ENABLE(i) = '0'`) must already be synchronous to `clk_i`.
 
 ### it_ctrl
