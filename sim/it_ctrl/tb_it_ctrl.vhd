@@ -69,7 +69,7 @@ begin
 
     -- Every name is checked before the first scenario
     for i in 1 to list_length(TESTS_LIST) loop
-      if not is_test(list_item(TESTS_LIST, i))
+      if not list_contains(C_TESTS, list_item(TESTS_LIST, i))
       then
         alert(TB_ERROR, "Unknown test """ & list_item(TESTS_LIST, i) & """ (tests : " & C_TESTS & ")", C_SCOPE);
       end if;

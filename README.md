@@ -210,9 +210,9 @@ Notes:
 
 ### Scenarios (`TESTS_LIST`)
 
-The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space (`rw1c,random,rw1c`), a name may be repeated. The sequencer first checks every name (an unknown name is a `TB_ERROR` before any scenario runs), then for each scenario drives a reset pulse with the bus and the lines inactive, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset and builds its own context. The empty list (default) only compiles and elaborates the testbench. The list is parsed with `list_length` / `list_item` of `asylum.string_pkg` (`asylum:utils:pkg` >= 1.10.0).
+The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space (`rw1c,random,rw1c`), a name may be repeated. The sequencer first checks every name (an unknown name is a `TB_ERROR` before any scenario runs), then for each scenario drives a reset pulse with the bus and the lines inactive, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset and builds its own context. The empty list (default) only compiles and elaborates the testbench. The list is parsed and its names checked with `list_length` / `list_item` / `list_contains` of `asylum.string_pkg` (`asylum:utils:pkg` >= 1.10.0).
 
-`tb_GIC` (N = `NB_LINES`; the run ends with the total `Number of checks`):
+`tb_GIC` (N = `NB_LINES`; checks counted as the `=> OK` lines of the log):
 
 | Name | Checks | Description |
 |------|--------|-------------|

@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
 -- Description: Helpers of the tb_GIC scenarios : SBI accesses (SBI VIP, zero
---              wait state), checks (counted for the final report), interrupt
+--              wait state), checks, interrupt
 --              lines driven on the falling edge of the clock, reset pulse.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
@@ -48,10 +48,6 @@ package tb_GIC_bfm_pkg is
     id_for_bfm_poll            => ID_BFM_POLL,
     use_ready_signal           => true
   );
-
-  -- Number of checks (chk, chk_itm, chk_int) since the start of the
-  -- simulation, logged at the end by the sequencer
-  impure function nb_checks return natural;
 
   -- SBI write
   procedure wr
@@ -123,32 +119,6 @@ end package tb_GIC_bfm_pkg;
 
 package body tb_GIC_bfm_pkg is
 
-  type t_counter is protected
-    procedure increment;
-    impure function get return natural;
-  end protected t_counter;
-
-  type t_counter is protected body
-    variable cnt : natural := 0;
-
-    procedure increment is
-    begin
-      cnt := cnt + 1;
-    end procedure;
-
-    impure function get return natural is
-    begin
-      return cnt;
-    end function;
-  end protected body t_counter;
-
-  shared variable checks : t_counter;
-
-  impure function nb_checks return natural is
-  begin
-    return checks.get;
-  end function;
-
   procedure wr
     (constant addr     : in    unsigned
     ;constant data     : in    std_logic_vector
@@ -184,7 +154,6 @@ package body tb_GIC_bfm_pkg is
              ,scope       => C_TB_SCOPE
              ,config      => C_SBI_CFG
              );
-    checks.increment;
   end procedure;
 
   procedure chk_itm
@@ -194,7 +163,6 @@ package body tb_GIC_bfm_pkg is
     ) is
   begin
     check_value(itm, exp, error, msg, C_TB_SCOPE);
-    checks.increment;
   end procedure;
 
   procedure chk_int
@@ -204,7 +172,6 @@ package body tb_GIC_bfm_pkg is
     ) is
   begin
     check_value(val, exp, error, msg, C_TB_SCOPE);
-    checks.increment;
   end procedure;
 
   procedure cycles

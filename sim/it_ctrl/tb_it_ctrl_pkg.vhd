@@ -33,11 +33,6 @@ package tb_it_ctrl_pkg is
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TESTS     : string := "edge,edge_ack";
 
-  -- True if name is an item of C_TESTS
-  function is_test
-    (constant name     : in  string
-    ) return boolean;
-
   -- Run the scenario name
   procedure run_test
     (constant name     : in  string
@@ -67,19 +62,6 @@ package tb_it_ctrl_pkg is
 end package tb_it_ctrl_pkg;
 
 package body tb_it_ctrl_pkg is
-
-  function is_test
-    (constant name     : in  string
-    ) return boolean is
-  begin
-    for i in 1 to list_length(C_TESTS) loop
-      if string_eq(list_item(C_TESTS, i), name)
-      then
-        return true;
-      end if;
-    end loop;
-    return false;
-  end function;
 
   procedure run_test
     (constant name     : in  string

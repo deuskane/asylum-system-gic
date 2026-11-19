@@ -36,11 +36,6 @@ package tb_GIC_tests_pkg is
   -- Names of the scenarios (valid items of TESTS_LIST)
   constant C_TESTS : string := "reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset";
 
-  -- True if name is an item of C_TESTS
-  function is_test
-    (constant name     : in    string
-    ) return boolean;
-
   -- Run the scenario name
   procedure run_test
     (constant name     : in    string
@@ -55,19 +50,6 @@ package tb_GIC_tests_pkg is
 end package tb_GIC_tests_pkg;
 
 package body tb_GIC_tests_pkg is
-
-  function is_test
-    (constant name     : in    string
-    ) return boolean is
-  begin
-    for i in 1 to list_length(C_TESTS) loop
-      if string_eq(list_item(C_TESTS, i), name)
-      then
-        return true;
-      end if;
-    end loop;
-    return false;
-  end function;
 
   procedure run_test
     (constant name     : in    string

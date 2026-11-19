@@ -112,7 +112,7 @@ begin
 
     -- Every name is checked before the first scenario
     for i in 1 to list_length(TESTS_LIST) loop
-      if not is_test(list_item(TESTS_LIST, i))
+      if not list_contains(C_TESTS, list_item(TESTS_LIST, i))
       then
         alert(TB_ERROR, "Unknown test """ & list_item(TESTS_LIST, i) & """ (tests : " & C_TESTS & ")", C_SCOPE);
       end if;
@@ -128,7 +128,6 @@ begin
       run_test(list_item(TESTS_LIST, i), C_ITS_SYNC_ENABLE, clk_i, arst_b_i, sbi_if, its_i, itm_o);
     end loop;
 
-    log(ID_LOG_HDR, "Number of checks : " & integer'image(nb_checks), C_SCOPE);
     report_alert_counters(FINAL);
     std.env.stop;
     wait;
