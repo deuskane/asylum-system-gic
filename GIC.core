@@ -180,33 +180,23 @@ targets:
       - ITS_SYNC_ENABLE=1
 
   #---------------------------------------
-  sim_gic_8_nosync:
+  # tb_GIC : compiled once per configuration (NB_LINES, SYNC_MASK),
+  # scenarios chosen at run time (TESTS_LIST, empty : build and
+  # elaboration only).
+  # Reference configuration 8_sync : sim_gic_8_sync (build only) and one
+  # sim_gic_8_sync_<test> target per scenario ; the other configurations
+  # run the whole list. Each target repeats the generics of its
+  # configuration : FuseSoC replaces the parameters list of an inherited
+  # target.
   #---------------------------------------
+  sim_gic_8_sync: &sim_gic
     << : *default
-    description     : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - build only (scenarios of TESTS_LIST)
     filesets_append :
       - sim
     toplevel        : tb_GIC
     parameters      :
-      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
-      - NB_LINES=8
-      - SYNC_MASK=0
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
-
-  #---------------------------------------
-  sim_gic_8_sync:
-  #---------------------------------------
-    << : *default
-    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
-    parameters      :
-      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
+      - TESTS_LIST
       - NB_LINES=8
       - SYNC_MASK=255
     default_tool    : ghdl
@@ -216,58 +206,144 @@ targets:
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
+  sim_gic_8_sync_reset_values:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - reset values of ISR, IMR and itm_o
+    parameters      :
+      - TESTS_LIST=reset_values
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_imr_rw:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - IMR read / write
+    parameters      :
+      - TESTS_LIST=imr_rw
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_masked_latched:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masked lines latched in the ISR, itm_o stays 0
+    parameters      :
+      - TESTS_LIST=masked_latched
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_unmasked_itm:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - only the unmasked line raises itm_o
+    parameters      :
+      - TESTS_LIST=unmasked_itm
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_latency_pulse:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - latency its_i -> itm_o per line, 1-cycle pulse capture
+    parameters      :
+      - TESTS_LIST=latency_pulse
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_rw1c:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR write 1 clears, write 0 has no effect
+    parameters      :
+      - TESTS_LIST=rw1c
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_isr_set_again:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR bit set again while its source is active
+    parameters      :
+      - TESTS_LIST=isr_set_again
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_mask_pending:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masking pending lines drops itm_o, masked events kept
+    parameters      :
+      - TESTS_LIST=mask_pending
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_random:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - random IMR / line patterns
+    parameters      :
+      - TESTS_LIST=random
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_async_reset:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - asynchronous reset clears ISR and IMR
+    parameters      :
+      - TESTS_LIST=async_reset
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_nosync:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+    parameters      :
+      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
+      - NB_LINES=8
+      - SYNC_MASK=0
+
+  #---------------------------------------
   sim_gic_3_mixed:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
       - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=3
       - SYNC_MASK=5
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   sim_gic_4_mixed:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 4 lines, synchronizer on lines 0 and 1 (asymmetric mask)
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
       - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=4
       - SYNC_MASK=3
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   sim_gic_1_sync:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 1 line with synchronizer
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
       - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=1
       - SYNC_MASK=1
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   # it_ctrl : compiled once, scenarios chosen at run time (TESTS_LIST),

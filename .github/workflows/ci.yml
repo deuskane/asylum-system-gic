@@ -32,6 +32,56 @@ jobs:
     with:
       name: sim_gic_8_sync
 
+  sim_gic_8_sync_async_reset:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_async_reset
+
+  sim_gic_8_sync_imr_rw:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_imr_rw
+
+  sim_gic_8_sync_isr_set_again:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_isr_set_again
+
+  sim_gic_8_sync_latency_pulse:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_latency_pulse
+
+  sim_gic_8_sync_mask_pending:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_mask_pending
+
+  sim_gic_8_sync_masked_latched:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_masked_latched
+
+  sim_gic_8_sync_random:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_random
+
+  sim_gic_8_sync_reset_values:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_reset_values
+
+  sim_gic_8_sync_rw1c:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_rw1c
+
+  sim_gic_8_sync_unmasked_itm:
+    uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
+    with:
+      name: sim_gic_8_sync_unmasked_itm
+
   sim_it_ctrl:
     uses: deuskane/asylum-ci/.github/workflows/vhdl-ci.yml@main
     with:

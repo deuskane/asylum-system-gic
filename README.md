@@ -205,19 +205,47 @@ Notes:
 
 | File | DUT | Description |
 |------|-----|-------------|
-| [sim/tb_GIC.vhd](sim/tb_GIC.vhd) | `sbi_GIC` | UVVM testbench with the SBI VIP (every access checked without wait state), generics `NB_LINES` (1 to 8) and `SYNC_MASK` (`ITS_SYNC_ENABLE`, bit i = line i). The DUT is connected with an `its_i(NB_LINES downto 1)` vector and an ascending `ITS_SYNC_ENABLE(0 to NB_LINES-1)` to check the mapping by position. T1 reset values (`isr` = `imr` = 0, `itm_o` = 0), T2 `imr` read / write, T3 masked lines are latched but `itm_o` stays 0, T4 per line with every line active: every line is latched, only the unmasked one raises `itm_o`, the bits stay set after the lines fall, clearing the unmasked bit drops `itm_o` while the masked bits stay pending, T5 latency `its_i` -> `itm_o` per line (1 cycle without synchronizer, 3 cycles with it) and capture of a 1-cycle pulse, T6 rw1c (write 0 no effect, write 0x55 / 0xAA clears even / odd bits, `itm_o` = OR(ISR)), T7 a bit cleared while its source is active reads 0 during one cycle and is set again, T8 masking pending lines drops `itm_o` without clearing them and unmasking raises it again, masked active lines and masked 1-cycle pulses are latched, T9 32 random `imr` / line patterns checked against `isr = OR(its)` and `itm_o = OR(isr and imr)` with random clears, T10 asynchronous reset. ISR bits above `NB_LINES` are checked to stay 0 |
-| [sim/tb_it_ctrl.vhd](sim/tb_it_ctrl.vhd) | `it_ctrl` | UVVM testbench, one scenario per run chosen by the generic `TEST` (procedures of [sim/common/tb_it_ctrl_pkg.vhd](sim/common/tb_it_ctrl_pkg.vhd)): `edge` a rising edge is latched until the acknowledge, a level that stays high is not latched again, a new edge is; `edge_ack` a rising edge in the cycle of the acknowledge is kept |
+| [sim/gic/tb_GIC.vhd](sim/gic/tb_GIC.vhd) | `sbi_GIC` | UVVM testbench with the SBI VIP (every access checked without wait state), generics `TESTS_LIST` (scenarios, see below), `NB_LINES` (1 to 8) and `SYNC_MASK` (`ITS_SYNC_ENABLE`, bit i = line i). The DUT is connected with an `its_i(NB_LINES downto 1)` vector and an ascending `ITS_SYNC_ENABLE(0 to NB_LINES-1)` to check the mapping by position; ISR bits above `NB_LINES` are checked to stay 0. One package per scenario, `sim/gic/tb_GIC_<name>_pkg.vhd` (procedure `run`), names and dispatch in [sim/gic/tb_GIC_tests_pkg.vhd](sim/gic/tb_GIC_tests_pkg.vhd), helpers (SBI accesses, checks and their count, interrupt lines, reset pulse) in [sim/gic/tb_GIC_bfm_pkg.vhd](sim/gic/tb_GIC_bfm_pkg.vhd) |
+| [sim/it_ctrl/tb_it_ctrl.vhd](sim/it_ctrl/tb_it_ctrl.vhd) | `it_ctrl` | UVVM testbench, generic `TESTS_LIST`; scenarios, names and dispatch in [sim/it_ctrl/tb_it_ctrl_pkg.vhd](sim/it_ctrl/tb_it_ctrl_pkg.vhd) |
+
+### Scenarios (`TESTS_LIST`)
+
+The scenarios are chosen at run time with the generic `TESTS_LIST`: names separated by `,` without space (`rw1c,random,rw1c`), a name may be repeated. The sequencer first checks every name (an unknown name is a `TB_ERROR` before any scenario runs), then for each scenario drives a reset pulse with the bus and the lines inactive, logs `TEST <i>/<N> : <name>` and runs it: each scenario starts from reset and builds its own context. The empty list (default) only compiles and elaborates the testbench. The list is parsed with `list_length` / `list_item` of `asylum.string_pkg` (`asylum:utils:pkg` >= 1.10.0).
+
+`tb_GIC` (N = `NB_LINES`; the run ends with the total `Number of checks`):
+
+| Name | Checks | Description |
+|------|--------|-------------|
+| `reset_values` | 3 | `isr` = `imr` = 0 (every line masked) and `itm_o` = 0 after reset |
+| `imr_rw` | 6 | `imr` read / write with the lines inactive, `isr` stays 0 |
+| `masked_latched` | 3 | Every line masked: the active lines are latched in `isr`, `itm_o` stays 0 |
+| `unmasked_itm` | 6 × N | For each line, unmasked alone with every line active: every line is latched, only the unmasked one raises `itm_o`, the bits stay set after the lines fall, clearing the unmasked bit drops `itm_o` while the masked bits stay pending |
+| `latency_pulse` | 3 × N | For each line: latency `its_i` -> `itm_o` (1 cycle without synchronizer, 3 cycles with it) and capture of a 1-cycle pulse |
+| `rw1c` | 6 | `isr` rw1c: write 0 has no effect, write 0x55 / 0xAA clears the even / odd bits, `itm_o` = OR(ISR) |
+| `isr_set_again` | 4 × N | For each line: a bit cleared while its source is active reads 0 during one cycle and is set again |
+| `mask_pending` | 11 | Masking pending lines drops `itm_o` without clearing them and unmasking raises it again; masked active lines and masked 1-cycle pulses are latched, unmasking them raises `itm_o` (event not lost) |
+| `random` | 96 | 32 random `imr` / line patterns checked against `isr = OR(its)` and `itm_o = OR(isr and imr)`, with random clears |
+| `async_reset` | 4 | Every line latched and unmasked, then a reset pulse: `isr`, `imr` and `itm_o` back to 0 |
+
+`tb_it_ctrl`:
+
+| Name | Checks | Description |
+|------|--------|-------------|
+| `edge` | 8 | A rising edge is latched until the acknowledge, a level that stays high is not latched again, a new edge is |
+| `edge_ack` | 3 | A rising edge in the cycle of the acknowledge is kept |
 
 ### Targets
 
 | Target | Toplevel | Description |
 |--------|----------|-------------|
 | `default` | `sbi_GIC` | HDL fileset + CSR generation (not a simulation) |
-| `sim_gic_8_nosync` | `tb_GIC` | 8 lines, no synchronizer (232 checks) |
-| `sim_gic_8_sync` | `tb_GIC` | 8 lines, synchronizer on every line (232 checks) |
-| `sim_gic_3_mixed` | `tb_GIC` | 3 lines, synchronizer on lines 0 and 2 (167 checks, latency 3 / 1 / 3 cycles) |
-| `sim_gic_4_mixed` | `tb_GIC` | 4 lines, synchronizer on lines 0 and 1 (180 checks, asymmetric mask: a reversed line mapping changes the latencies) |
-| `sim_gic_1_sync` | `tb_GIC` | 1 line with synchronizer (141 checks) |
+| `sim_gic_8_sync` | `tb_GIC` | Reference configuration, 8 lines, synchronizer on every line: build and elaboration only (`TESTS_LIST` empty), base of the scenario targets and of the list runs |
+| `sim_gic_8_sync_<name>` | `tb_GIC` | One target per scenario of `tb_GIC` in the reference configuration (`TESTS_LIST=<name>`): `sim_gic_8_sync_reset_values`, `_imr_rw`, `_masked_latched`, `_unmasked_itm`, `_latency_pulse`, `_rw1c`, `_isr_set_again`, `_mask_pending`, `_random`, `_async_reset` (233 checks in all) |
+| `sim_gic_8_nosync` | `tb_GIC` | 8 lines, no synchronizer, every scenario (233 checks) |
+| `sim_gic_3_mixed` | `tb_GIC` | 3 lines, synchronizer on lines 0 and 2, every scenario (168 checks, latency 3 / 1 / 3 cycles) |
+| `sim_gic_4_mixed` | `tb_GIC` | 4 lines, synchronizer on lines 0 and 1, every scenario (181 checks, asymmetric mask: a reversed line mapping changes the latencies) |
+| `sim_gic_1_sync` | `tb_GIC` | 1 line with synchronizer, every scenario (142 checks) |
+| `sim_it_ctrl` | `tb_it_ctrl` | `it_ctrl`: build and elaboration only (`TESTS_LIST` empty) |
 | `sim_it_ctrl_edge` | `tb_it_ctrl` | `it_ctrl`, scenario `edge` (8 checks) |
 | `sim_it_ctrl_edge_ack` | `tb_it_ctrl` | `it_ctrl`, scenario `edge_ack` (3 checks) |
 | `lint_ghdl` | `asylum.sbi_GIC_wrapper` | Lint: GHDL `-Wall` analysis and elaboration (empty simulation) of `sbi_GIC` (flat SBI ports, `NB_LINES` lines) and `it_ctrl` in a wrapper (`syn/sbi_GIC_wrapper.vhd`) |
@@ -225,6 +253,8 @@ Notes:
 | `lint_ghdl_synth_sync8` | `asylum.sbi_GIC_wrapper` | Synthesis check, 8 lines with synchronizer: `ITS_SYNC_ENABLE=11111111` |
 | `lint_ghdl_synth_mixed3` | `asylum.sbi_GIC_wrapper` | Synthesis check, 3 lines, mixed: `NB_LINES=3`, `ITS_SYNC_ENABLE=101` |
 | `lint_ghdl_synth_sync1` | `asylum.sbi_GIC_wrapper` | Synthesis check, 1 line with synchronizer: `NB_LINES=1`, `ITS_SYNC_ENABLE=1` |
+
+The reference configuration of a testbench (the most complete one: 8 lines with a synchronizer on every line for `tb_GIC`, the only one for `tb_it_ctrl`) has a build-only base target and one target per scenario: one CI job per scenario, a failure is isolated. Every other configuration has one target that runs the whole list: the `TEST <i>/<N>` header names a failing scenario. FuseSoC replaces the `parameters` list of an inherited target, so each target repeats the generics of its configuration. To add a scenario: its package `sim/gic/tb_GIC_<name>_pkg.vhd` (in the `sim` fileset), its name in `C_TESTS` and `run_test` of `tb_GIC_tests_pkg`, a `sim_gic_8_sync_<name>` target, the name in the `TESTS_LIST` of the other configurations, then `make mk/targets.txt` and `make ci_generate`.
 
 A `lint_ghdl_synth_*` target is `lint_ghdl` with the generics of its configuration (FuseSoC `parameters`) and a `pre_run` hook, `ghdl_synth.sh` of `asylum:utils:ghdl_synth`, which adds `include ghdl_synth.mk` to the Makefile generated by edalize. The run step (`make run EXTRA_OPTIONS=<generics>`) then runs, in the build directory:
 
@@ -239,18 +269,33 @@ The default tool is GHDL (`mk/defs.mk`: `TOOL ?= ghdl`, `TARGET ?= sim_gic_8_nos
 
 ```bash
 make help                     # variables, rules and target list (mk/targets.txt)
-make sim_gic_3_mixed          # run one target (log in log/)
+make sim_gic_8_sync_rw1c      # one scenario of the reference configuration (log in log/)
+make sim_gic_3_mixed          # every scenario of a configuration
 make nonreg_sim               # run every sim_* target
 make lint_ghdl                # GHDL -Wall lint (make nonreg_lint: every lint_* target)
 make lint_ghdl_synth_default   # GHDL -Wall lint + ghdl --synth -Wall check of one configuration
 make clean                    # remove build/ and log/
 ```
 
-Equivalent FuseSoC command (the generics can be overridden on the command line):
+Equivalent FuseSoC command (any generic of the target can be overridden after the VLNV):
 
 ```bash
-fusesoc --cores-root . run --build-root build --target sim_gic_8_sync asylum:system:GIC:2.0.0 --NB_LINES=5
-fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl_edge asylum:system:GIC:2.0.0 --TEST=edge_ack
+fusesoc --cores-root . run --build-root build --no-export --target sim_gic_8_sync asylum:system:GIC:2.0.0 --NB_LINES=5 --TESTS_LIST=latency_pulse,random
+```
+
+To run a list of scenarios, build the configuration once, then run the list without recompiling, either with FuseSoC (same `--build-root` and `--no-export` as the Makefile, so that the build of the target is reused):
+
+```bash
+make sim_gic_8_sync           # build and elaboration (TESTS_LIST empty)
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_gic_8_sync asylum:system:GIC:2.0.0 --TESTS_LIST=rw1c,random,rw1c
+fusesoc --cores-root . run --build-root build --no-export --run --target sim_it_ctrl asylum:system:GIC:2.0.0 --TESTS_LIST=edge_ack,edge
+```
+
+or in the build directory of the target. `EXTRA_OPTIONS` replaces every generic set by the target: repeat the generics of the configuration, else their default values apply (`SYNC_MASK=0`):
+
+```bash
+cd build/asylum_system_GIC_2.0.0/sim_gic_8_sync-ghdl
+make run EXTRA_OPTIONS="-gTESTS_LIST=rw1c,random,rw1c -gNB_LINES=8 -gSYNC_MASK=255"
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs every `sim_*` target. `GIC_core` is also exercised by the interrupt tests of other IPs (e.g. `tb_GPIO_irq` in `asylum-component-gpio`).
@@ -287,10 +332,14 @@ asylum-system-gic/
 ├── doc/
 │   └── GIC.drawio          # Block diagram
 ├── sim/
-│   ├── tb_GIC.vhd          # UVVM testbench of sbi_GIC
-│   ├── tb_it_ctrl.vhd      # UVVM testbench of it_ctrl (generic TEST)
-│   └── common/
-│       └── tb_it_ctrl_pkg.vhd  # Scenarios of tb_it_ctrl
+│   ├── gic/
+│   │   ├── tb_GIC.vhd             # UVVM testbench of sbi_GIC (generic TESTS_LIST)
+│   │   ├── tb_GIC_tests_pkg.vhd   # Names of the scenarios and dispatch (run_test)
+│   │   ├── tb_GIC_bfm_pkg.vhd     # Helpers: SBI accesses, checks, lines, reset pulse
+│   │   └── tb_GIC_<name>_pkg.vhd  # One package per scenario (procedure run)
+│   └── it_ctrl/
+│       ├── tb_it_ctrl.vhd         # UVVM testbench of it_ctrl (generic TESTS_LIST)
+│       └── tb_it_ctrl_pkg.vhd     # Scenarios, names and dispatch (run_test)
 ├── syn/
 │   └── sbi_GIC_wrapper.vhd    # Lint / synthesis check wrapper (flat SBI ports + it_ctrl)
 └── hdl/
@@ -311,7 +360,7 @@ asylum-system-gic/
 | Core | Used by (fileset) | Purpose |
 |------|-------------------|---------|
 | `asylum:utils:generators` (`>=2.8.0`) | `hdl` | regtool generator and CSR building blocks (`csr_reg`) |
-| `asylum:utils:pkg` | `hdl` | Common packages (`sbi_pkg`, `pbi_pkg`, `logic_pkg` for `reduce_or`) |
+| `asylum:utils:pkg` | `hdl`, `sim` and `sim_it_ctrl` (`>=1.10.0`) | Common packages (`sbi_pkg`, `pbi_pkg`, `logic_pkg` for `reduce_or`); `string_pkg` `list_length` / `list_item` (1.10.0) to parse `TESTS_LIST` |
 | `asylum:target:techmap` | `hdl` | `sync2dffrn` synchronizer (`techmap_pkg`) |
 | `asylum:utils:ghdl_synth` | `syn` | `ghdl_synth.sh` / `ghdl_synth.mk` (`pre_run` hook of `lint_ghdl_synth_*`) |
-| `bitvis:verification:uvvm` | `sim` | UVVM utility library and SBI VIP (`bitvis_vip_sbi`) |
+| `bitvis:verification:uvvm` | `sim`, `sim_it_ctrl` | UVVM utility library and SBI VIP (`bitvis_vip_sbi`) |
