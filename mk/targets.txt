@@ -1,15 +1,25 @@
-default                 : Default Target
-default_sim_it_ctrl     : Simulation of it_ctrl (scenario TEST)
-lint_ghdl               : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_wrapper)
-lint_ghdl_synth_default : Synthesis check of sbi_GIC_wrapper, 8 lines without synchronizer (default generics)
-lint_ghdl_synth_mixed3  : Synthesis check of sbi_GIC_wrapper, 3 lines, mixed
-lint_ghdl_synth_sync1   : Synthesis check of sbi_GIC_wrapper, 1 line with synchronizer
-lint_ghdl_synth_sync8   : Synthesis check of sbi_GIC_wrapper, 8 lines with synchronizer
-sim_gic_1_sync          : Simulation of sbi_GIC with VIP - 1 line with synchronizer
-sim_gic_3_mixed         : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
-sim_gic_4_mixed         : Simulation of sbi_GIC with VIP - 4 lines, synchronizer on lines 0 and 1 (asymmetric mask)
-sim_gic_8_nosync        : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
-sim_gic_8_sync          : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
-sim_it_ctrl_edge        : Simulation of it_ctrl - rising edge latched until the acknowledge
-sim_it_ctrl_edge_ack    : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
+default                       : Default Target
+lint_ghdl                     : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_wrapper)
+lint_ghdl_synth_default       : Synthesis check of sbi_GIC_wrapper, 8 lines without synchronizer (default generics)
+lint_ghdl_synth_mixed3        : Synthesis check of sbi_GIC_wrapper, 3 lines, mixed
+lint_ghdl_synth_sync1         : Synthesis check of sbi_GIC_wrapper, 1 line with synchronizer
+lint_ghdl_synth_sync8         : Synthesis check of sbi_GIC_wrapper, 8 lines with synchronizer
+sim_gic_1_sync                : Simulation of sbi_GIC with VIP - 1 line with synchronizer
+sim_gic_3_mixed               : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
+sim_gic_4_mixed               : Simulation of sbi_GIC with VIP - 4 lines, synchronizer on lines 0 and 1 (asymmetric mask)
+sim_gic_8_nosync              : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+sim_gic_8_sync                : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - build only (scenarios of TESTS_LIST)
+sim_gic_8_sync_async_reset    : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - asynchronous reset clears ISR and IMR
+sim_gic_8_sync_imr_rw         : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - IMR read / write
+sim_gic_8_sync_isr_set_again  : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR bit set again while its source is active
+sim_gic_8_sync_latency_pulse  : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - latency its_i -> itm_o per line, 1-cycle pulse capture
+sim_gic_8_sync_mask_pending   : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masking pending lines drops itm_o, masked events kept
+sim_gic_8_sync_masked_latched : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masked lines latched in the ISR, itm_o stays 0
+sim_gic_8_sync_random         : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - random IMR / line patterns
+sim_gic_8_sync_reset_values   : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - reset values of ISR, IMR and itm_o
+sim_gic_8_sync_rw1c           : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR write 1 clears, write 0 has no effect
+sim_gic_8_sync_unmasked_itm   : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - only the unmasked line raises itm_o
+sim_it_ctrl                   : Simulation of it_ctrl - build only (scenarios of TESTS_LIST)
+sim_it_ctrl_edge              : Simulation of it_ctrl - rising edge latched until the acknowledge
+sim_it_ctrl_edge_ack          : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
 

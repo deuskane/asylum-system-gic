@@ -67,20 +67,36 @@ filesets:
   sim:
   #---------------------------------------
     files:
-      - sim/tb_GIC.vhd
+      - sim/gic/tb_GIC_bfm_pkg.vhd
+      - sim/gic/tb_GIC_reset_values_pkg.vhd
+      - sim/gic/tb_GIC_imr_rw_pkg.vhd
+      - sim/gic/tb_GIC_masked_latched_pkg.vhd
+      - sim/gic/tb_GIC_unmasked_itm_pkg.vhd
+      - sim/gic/tb_GIC_latency_pulse_pkg.vhd
+      - sim/gic/tb_GIC_rw1c_pkg.vhd
+      - sim/gic/tb_GIC_isr_set_again_pkg.vhd
+      - sim/gic/tb_GIC_mask_pending_pkg.vhd
+      - sim/gic/tb_GIC_random_pkg.vhd
+      - sim/gic/tb_GIC_async_reset_pkg.vhd
+      - sim/gic/tb_GIC_tests_pkg.vhd
+      - sim/gic/tb_GIC.vhd
     file_type : vhdlSource-2008
     depend       :
       - bitvis:verification:uvvm
+      # string_pkg list_length / list_item (TESTS_LIST)
+      - ">=asylum:utils:pkg:1.10.0"
 
   #---------------------------------------
   sim_it_ctrl:
   #---------------------------------------
     files:
-      - sim/common/tb_it_ctrl_pkg.vhd
-      - sim/tb_it_ctrl.vhd
+      - sim/it_ctrl/tb_it_ctrl_pkg.vhd
+      - sim/it_ctrl/tb_it_ctrl.vhd
     file_type : vhdlSource-2008
     depend       :
       - bitvis:verification:uvvm
+      # string_pkg list_length / list_item (TESTS_LIST)
+      - ">=asylum:utils:pkg:1.10.0"
 
   #---------------------------------------
   syn:
@@ -164,31 +180,23 @@ targets:
       - ITS_SYNC_ENABLE=1
 
   #---------------------------------------
-  sim_gic_8_nosync:
+  # tb_GIC : compiled once per configuration (NB_LINES, SYNC_MASK),
+  # scenarios chosen at run time (TESTS_LIST, empty : build and
+  # elaboration only).
+  # Reference configuration 8_sync : sim_gic_8_sync (build only) and one
+  # sim_gic_8_sync_<test> target per scenario ; the other configurations
+  # run the whole list. Each target repeats the generics of its
+  # configuration : FuseSoC replaces the parameters list of an inherited
+  # target.
   #---------------------------------------
+  sim_gic_8_sync: &sim_gic
     << : *default
-    description     : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - build only (scenarios of TESTS_LIST)
     filesets_append :
       - sim
     toplevel        : tb_GIC
     parameters      :
-      - NB_LINES=8
-      - SYNC_MASK=0
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
-
-  #---------------------------------------
-  sim_gic_8_sync:
-  #---------------------------------------
-    << : *default
-    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
-    parameters      :
+      - TESTS_LIST
       - NB_LINES=8
       - SYNC_MASK=255
     default_tool    : ghdl
@@ -198,68 +206,158 @@ targets:
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
+  sim_gic_8_sync_reset_values:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - reset values of ISR, IMR and itm_o
+    parameters      :
+      - TESTS_LIST=reset_values
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_imr_rw:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - IMR read / write
+    parameters      :
+      - TESTS_LIST=imr_rw
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_masked_latched:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masked lines latched in the ISR, itm_o stays 0
+    parameters      :
+      - TESTS_LIST=masked_latched
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_unmasked_itm:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - only the unmasked line raises itm_o
+    parameters      :
+      - TESTS_LIST=unmasked_itm
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_latency_pulse:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - latency its_i -> itm_o per line, 1-cycle pulse capture
+    parameters      :
+      - TESTS_LIST=latency_pulse
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_rw1c:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR write 1 clears, write 0 has no effect
+    parameters      :
+      - TESTS_LIST=rw1c
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_isr_set_again:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - ISR bit set again while its source is active
+    parameters      :
+      - TESTS_LIST=isr_set_again
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_mask_pending:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - masking pending lines drops itm_o, masked events kept
+    parameters      :
+      - TESTS_LIST=mask_pending
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_random:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - random IMR / line patterns
+    parameters      :
+      - TESTS_LIST=random
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_sync_async_reset:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, synchronizer on every line - asynchronous reset clears ISR and IMR
+    parameters      :
+      - TESTS_LIST=async_reset
+      - NB_LINES=8
+      - SYNC_MASK=255
+
+  #---------------------------------------
+  sim_gic_8_nosync:
+  #---------------------------------------
+    << : *sim_gic
+    description     : Simulation of sbi_GIC with VIP - 8 lines, no synchronizer
+    parameters      :
+      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
+      - NB_LINES=8
+      - SYNC_MASK=0
+
+  #---------------------------------------
   sim_gic_3_mixed:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 3 lines, synchronizer on lines 0 and 2
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
+      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=3
       - SYNC_MASK=5
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   sim_gic_4_mixed:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 4 lines, synchronizer on lines 0 and 1 (asymmetric mask)
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
+      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=4
       - SYNC_MASK=3
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
   sim_gic_1_sync:
   #---------------------------------------
-    << : *default
+    << : *sim_gic
     description     : Simulation of sbi_GIC with VIP - 1 line with synchronizer
-    filesets_append :
-      - sim
-    toplevel        : tb_GIC
     parameters      :
+      - TESTS_LIST=reset_values,imr_rw,masked_latched,unmasked_itm,latency_pulse,rw1c,isr_set_again,mask_pending,random,async_reset
       - NB_LINES=1
       - SYNC_MASK=1
-    default_tool    : ghdl
-    tools :
-      ghdl :
-        analyze_options : ["-Wall","-fsynopsys","-frelaxed","--no-vital-checks"]
-        run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
-  # it_ctrl : compiled once, scenario chosen at run time (TEST),
+  # it_ctrl : compiled once, scenarios chosen at run time (TESTS_LIST),
+  # empty list : build and elaboration only ;
   # one sim_it_ctrl_<test> target per scenario
   #---------------------------------------
-  default_sim_it_ctrl: &sim_it_ctrl
+  sim_it_ctrl: &sim_it_ctrl
     << : *default
-    description     : Simulation of it_ctrl (scenario TEST)
+    description     : Simulation of it_ctrl - build only (scenarios of TESTS_LIST)
     filesets_append :
       - sim_it_ctrl
     toplevel        : tb_it_ctrl
     parameters      :
-      - TEST
+      - TESTS_LIST
     default_tool    : ghdl
     tools :
       ghdl :
@@ -272,7 +370,7 @@ targets:
     << : *sim_it_ctrl
     description     : Simulation of it_ctrl - rising edge latched until the acknowledge
     parameters      :
-      - TEST=edge
+      - TESTS_LIST=edge
 
   #---------------------------------------
   sim_it_ctrl_edge_ack:
@@ -280,7 +378,7 @@ targets:
     << : *sim_it_ctrl
     description     : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
     parameters      :
-      - TEST=edge_ack
+      - TESTS_LIST=edge_ack
 
 #=========================================
 scripts:
@@ -308,10 +406,10 @@ parameters :
     default     : 0
     paramtype   : generic
 
-  TEST :
-    description : Scenario of tb_it_ctrl (edge, edge_ack)
+  TESTS_LIST :
+    description : Scenarios run in sequence, separated by ',' (names in sim/gic/tb_GIC_tests_pkg.vhd, sim/it_ctrl/tb_it_ctrl_pkg.vhd), empty = build only
     datatype    : str
-    default     : edge
+    default     : ""
     paramtype   : generic
 
   #---------------------------------------
