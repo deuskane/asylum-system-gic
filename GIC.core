@@ -76,11 +76,13 @@ filesets:
   sim_it_ctrl:
   #---------------------------------------
     files:
-      - sim/common/tb_it_ctrl_pkg.vhd
-      - sim/tb_it_ctrl.vhd
+      - sim/it_ctrl/tb_it_ctrl_pkg.vhd
+      - sim/it_ctrl/tb_it_ctrl.vhd
     file_type : vhdlSource-2008
     depend       :
       - bitvis:verification:uvvm
+      # string_pkg list_length / list_item (TESTS_LIST)
+      - ">=asylum:utils:pkg:1.10.0"
 
   #---------------------------------------
   syn:
@@ -249,17 +251,18 @@ targets:
         run_options     : ["--fst=dut.fst","--ieee-asserts=disable"]
 
   #---------------------------------------
-  # it_ctrl : compiled once, scenario chosen at run time (TEST),
+  # it_ctrl : compiled once, scenarios chosen at run time (TESTS_LIST),
+  # empty list : build and elaboration only ;
   # one sim_it_ctrl_<test> target per scenario
   #---------------------------------------
-  default_sim_it_ctrl: &sim_it_ctrl
+  sim_it_ctrl: &sim_it_ctrl
     << : *default
-    description     : Simulation of it_ctrl (scenario TEST)
+    description     : Simulation of it_ctrl - build only (scenarios of TESTS_LIST)
     filesets_append :
       - sim_it_ctrl
     toplevel        : tb_it_ctrl
     parameters      :
-      - TEST
+      - TESTS_LIST
     default_tool    : ghdl
     tools :
       ghdl :
@@ -272,7 +275,7 @@ targets:
     << : *sim_it_ctrl
     description     : Simulation of it_ctrl - rising edge latched until the acknowledge
     parameters      :
-      - TEST=edge
+      - TESTS_LIST=edge
 
   #---------------------------------------
   sim_it_ctrl_edge_ack:
@@ -280,7 +283,7 @@ targets:
     << : *sim_it_ctrl
     description     : Simulation of it_ctrl - rising edge in the cycle of the acknowledge kept
     parameters      :
-      - TEST=edge_ack
+      - TESTS_LIST=edge_ack
 
 #=========================================
 scripts:
@@ -308,10 +311,10 @@ parameters :
     default     : 0
     paramtype   : generic
 
-  TEST :
-    description : Scenario of tb_it_ctrl (edge, edge_ack)
+  TESTS_LIST :
+    description : Scenarios run in sequence, separated by ',' (tb_it_ctrl edge, edge_ack), empty = build only
     datatype    : str
-    default     : edge
+    default     : ""
     paramtype   : generic
 
   #---------------------------------------

@@ -5,15 +5,16 @@
 -- File       : tb_it_ctrl_pkg.vhd
 -- Author     : Mathieu Rosiere
 -------------------------------------------------------------------------------
--- Description: Scenarios of tb_it_ctrl (one per TEST value). The lines are
---              driven on the falling edge of clk, it_val is checked after the
---              rising edge.
+-- Description: Scenarios of tb_it_ctrl and their dispatch (run_test). The
+--              lines are driven on the falling edge of clk, it_val is checked
+--              after the rising edge.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2026
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author   Description
 -- 2026-11-11  1.0      mrosiere Created
+-- 2026-11-19  1.1      mrosiere Names of the scenarios and run_test (TESTS_LIST)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -22,9 +23,29 @@ use     ieee.std_logic_1164.all;
 library uvvm_util;
 context uvvm_util.uvvm_util_context;
 
+library asylum;
+use     asylum.string_pkg.all;
+
 package tb_it_ctrl_pkg is
 
   constant C_PKG_SCOPE : string := "TB_IT_CTRL_PKG";
+
+  -- Names of the scenarios (valid items of TESTS_LIST)
+  constant C_TESTS     : string := "edge,edge_ack";
+
+  -- True if name is an item of C_TESTS
+  function is_test
+    (constant name     : in  string
+    ) return boolean;
+
+  -- Run the scenario name
+  procedure run_test
+    (constant name     : in  string
+    ;signal   clk      : in  std_logic
+    ;signal   it       : out std_logic
+    ;signal   it_ack   : out std_logic
+    ;signal   it_val   : in  std_logic
+    );
 
   -- A rising edge of it is latched until the acknowledge; a level that stays
   -- high is not latched again; a new edge after the acknowledge is
@@ -46,6 +67,38 @@ package tb_it_ctrl_pkg is
 end package tb_it_ctrl_pkg;
 
 package body tb_it_ctrl_pkg is
+
+  function is_test
+    (constant name     : in  string
+    ) return boolean is
+  begin
+    for i in 1 to list_length(C_TESTS) loop
+      if string_eq(list_item(C_TESTS, i), name)
+      then
+        return true;
+      end if;
+    end loop;
+    return false;
+  end function;
+
+  procedure run_test
+    (constant name     : in  string
+    ;signal   clk      : in  std_logic
+    ;signal   it       : out std_logic
+    ;signal   it_ack   : out std_logic
+    ;signal   it_val   : in  std_logic
+    ) is
+  begin
+    if    string_eq(name, "edge")
+    then
+      test_edge    (clk, it, it_ack, it_val);
+    elsif string_eq(name, "edge_ack")
+    then
+      test_edge_ack(clk, it, it_ack, it_val);
+    else
+      alert(TB_ERROR, "Unknown test " & name, C_PKG_SCOPE);
+    end if;
+  end procedure;
 
   -- Drive it / it_ack on the falling edge, then wait for the next falling
   -- edge : it_val shows the result of the rising edge in between
@@ -79,7 +132,7 @@ package body tb_it_ctrl_pkg is
     ;signal   it_val   : in  std_logic
     ) is
   begin
-    log(ID_LOG_HDR, "Rising edge latched until the acknowledge", C_PKG_SCOPE);
+    log(ID_SEQUENCER, "Rising edge latched until the acknowledge", C_PKG_SCOPE);
     chk (it_val, '0', "it_val = 0 after reset");
     step(clk, it, it_ack, '1', '0');
     chk (it_val, '1', "Rising edge latched");
@@ -104,7 +157,7 @@ package body tb_it_ctrl_pkg is
     ;signal   it_val   : in  std_logic
     ) is
   begin
-    log(ID_LOG_HDR, "Rising edge in the cycle of the acknowledge", C_PKG_SCOPE);
+    log(ID_SEQUENCER, "Rising edge in the cycle of the acknowledge", C_PKG_SCOPE);
     step(clk, it, it_ack, '1', '0');
     step(clk, it, it_ack, '0', '0');
     chk (it_val, '1', "First edge latched");
