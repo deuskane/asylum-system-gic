@@ -1,0 +1,13 @@
+{ "signal": [
+  { "name": "clk_i",          "wave": "lhlhlhlhlhlhlhlhlhlh" },
+  { "name": "its_i(0)",       "wave": "0.1.0..............." },
+  { "name": "its (synchronized)", "wave": "0....1.0............" },
+  { "name": "isr",            "wave": "2......3.......2....", "data": ["0x00", "0x01", "0x00"] },
+  { "name": "imr",            "wave": "5...................", "data": ["0x01"] },
+  { "name": "itm_o",          "wave": "0......1.......0...." },
+  { "name": "SBI",            "wave": "x............4.x....", "data": ["wr isr 0x01"] }
+],
+  "head": { "text": "1-cycle pulse on line 0, synchronizer enabled (ITS_SYNC_ENABLE(0) = '1')" },
+  "foot": { "text": "its_i -> itm_o : 3 rising edges (1 without synchronizer); the bit stays set until software writes 1" },
+  "config": { "hscale": 2 }
+}
