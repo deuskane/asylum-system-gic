@@ -84,7 +84,7 @@ begin
 
   clock_generator(clk_i, clk_ena, 20 ns, "TB Clock");
 
-  ins_dut : sbi_GIC
+  dut : sbi_GIC
     generic map (
       NAME            => "GIC",
       ITS_SYNC_ENABLE => C_ITS_SYNC_ENABLE_ASC
