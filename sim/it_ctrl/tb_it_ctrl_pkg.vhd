@@ -15,6 +15,8 @@
 -- Date        Version  Author   Description
 -- 2026-11-11  1.0      mrosiere Created
 -- 2026-11-19  1.1      mrosiere Names of the scenarios and run_test (TESTS_LIST)
+-- 2026-11-20  1.2      mrosiere edge : it_val registered (no combinational
+--                               path from it_i)
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -116,7 +118,12 @@ package body tb_it_ctrl_pkg is
   begin
     log(ID_SEQUENCER, "Rising edge latched until the acknowledge", C_PKG_SCOPE);
     chk (it_val, '0', "it_val = 0 after reset");
-    step(clk, it, it_ack, '1', '0');
+    -- Registered output : no combinational path from it_i to it_val
+    wait until falling_edge(clk);
+    it     <= '1';
+    wait for 1 ns;
+    chk (it_val, '0', "it_val still 0 before the rising edge (registered)");
+    wait until falling_edge(clk);
     chk (it_val, '1', "Rising edge latched");
     step(clk, it, it_ack, '1', '0');
     chk (it_val, '1', "it_val stays set while it stays high");
