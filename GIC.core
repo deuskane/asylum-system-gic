@@ -180,6 +180,13 @@ targets:
       - ITS_SYNC_ENABLE=1
 
   #---------------------------------------
+  lint_ghdl_synth_it_ctrl :
+  #---------------------------------------
+    << : *lint_ghdl_synth
+    description     : Synthesis check of it_ctrl (own top, not instantiated by sbi_GIC)
+    toplevel        : asylum.it_ctrl
+
+  #---------------------------------------
   # tb_GIC : compiled once per configuration (NB_LINES, SYNC_MASK),
   # scenarios chosen at run time (TESTS_LIST, empty : build and
   # elaboration only).

@@ -1,6 +1,7 @@
 default                       : Default Target
 lint_ghdl                     : Lint with GHDL (-Wall analysis and elaboration of sbi_GIC_wrapper)
 lint_ghdl_synth_default       : Synthesis check of sbi_GIC_wrapper, 8 lines without synchronizer (default generics)
+lint_ghdl_synth_it_ctrl       : Synthesis check of it_ctrl (own top, not instantiated by sbi_GIC)
 lint_ghdl_synth_mixed3        : Synthesis check of sbi_GIC_wrapper, 3 lines, mixed
 lint_ghdl_synth_sync1         : Synthesis check of sbi_GIC_wrapper, 1 line with synchronizer
 lint_ghdl_synth_sync8         : Synthesis check of sbi_GIC_wrapper, 8 lines with synchronizer
