@@ -186,13 +186,13 @@ Figures of the `syn_*` targets (`make nonreg_syn`, see [Targets](#targets)): [sy
 
 | Configuration | LUT¹ | LUTRAM¹ | FF¹ | CARRY4¹ | MUXF7/F8¹ | BRAM¹ | DSP¹ | Area² (µm²) | kGE³ |
 |---|---|---|---|---|---|---|---|---|---|
-| `syn_default` (8 lines, no synchronizer) | 38 | 0 | 16 | 0 | 3 | 0 | 0 | 700.67 | 0.187 |
-| `syn_sync8` (8 lines, synchronizer on every line) | 54 | 0 | 32 | 0 | 3 | 0 | 0 | 1101.06 | 0.293 |
-| `syn_mixed3` (3 lines, synchronizer on lines 0 and 2) | 42 | 0 | 20 | 0 | 3 | 0 | 0 | 794.51 | 0.212 |
-| `syn_sync1` (1 line with synchronizer) | 40 | 0 | 18 | 0 | 3 | 0 | 0 | 741.96 | 0.198 |
-| `syn_it_ctrl` (`it_ctrl` alone) | 3 | 0 | 2 | 0 | 0 | 0 | 0 | 63.81 | 0.017 |
+| `syn_default` (8 lines, no synchronizer) | 21 | 0 | 16 | 0 | 3 | 0 | 0 | 700.67 | 0.187 |
+| `syn_sync8` (8 lines, synchronizer on every line) | 21 | 0 | 32 | 0 | 3 | 0 | 0 | 1101.06 | 0.293 |
+| `syn_mixed3` (3 lines, synchronizer on lines 0 and 2) | 21 | 0 | 20 | 0 | 3 | 0 | 0 | 794.51 | 0.212 |
+| `syn_sync1` (1 line with synchronizer) | 21 | 0 | 18 | 0 | 3 | 0 | 0 | 741.96 | 0.198 |
+| `syn_it_ctrl` (`it_ctrl` alone) | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 63.81 | 0.017 |
 
-¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. An `INV` counts as a `LUT1`: `synth_xilinx` puts one on the reset pin of each flip-flop with the active-low reset (16 of the 38 LUTs of `syn_default`, 32 of the 54 of `syn_sync8`). The IP has no memory: no LUTRAM, no BRAM. Flip-flops: `isr` and `imr` (8 each, whatever the number of lines) and 2 per synchronized line.
+¹ Xilinx Artix-7 (LUT6), Yosys 0.33 `synth_xilinx -flatten -noiopad -noclkbuf`, before place and route: every cell of the netlist is counted, Vivado may differ. Identical cells are merged as a vendor tool does (`opt_merge -share_all`): the inverters of an active-low reset net become one; every remaining cell is counted, an `INV` as a `LUT1` (1 of the 21 LUTs of every `sbi_GIC` configuration: the synchronizers add flip-flops only). The IP has no memory: no LUTRAM, no BRAM. Flip-flops: `isr` and `imr` (8 each, whatever the number of lines) and 2 per synchronized line.
 
 ² SkyWater sky130 `sky130_fd_sc_hd`, typical corner (tt, 25 °C, 1.80 V), Yosys 0.33 `synth` + `dfflibmap` + `abc -liberty`: standard-cell area only, no timing constraint, no buffering, clock tree or placement.
 
